@@ -1,0 +1,12 @@
+tmp
+*.ipynb
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+*.egg-info/
+*.egg
+*.whl
+*.tar.gz
