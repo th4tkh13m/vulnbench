@@ -8,6 +8,8 @@ class TestStatus(Enum):
     ERROR = "ERROR"
     XFAIL = "XFAIL"
     
+
+    
 def parse_log_pytest(log: str) -> dict[str, str]:
     """
     Parser for test logs generated with PyTest framework
@@ -202,3 +204,7 @@ def has_attribute_or_import_error(log_before):
             return True
     return False
 
+    
+TESTCASE_HANDLER = {
+    "ytdl-org/youtube-dl": parse_log_django
+}

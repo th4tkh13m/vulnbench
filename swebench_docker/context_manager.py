@@ -135,6 +135,7 @@ class TaskEnvContextManager:
         self.timeout = timeout
 
         log_file_name = f"{self.id}.{model}.{setting}.eval.log"
+        test_case_log_file_name = f"{self.id}.{model}.{setting}.eval.test_case.log"
         test_data_file_name = f"{self.id}.{model}.{setting}.eval.test_case.json"
         vulnerability_data_file_name = (
             f"{self.id}.{model}.{setting}.eval.vulnerability.json"
@@ -142,6 +143,9 @@ class TaskEnvContextManager:
 
         
         self.log_file = os.path.join(log_dir, log_file_name)
+        self.test_case_log_file = os.path.join(
+            log_dir, test_case_log_file_name
+        )
         self.test_data_file = os.path.join(
             log_dir, test_data_file_name
         )
@@ -155,6 +159,12 @@ class TaskEnvContextManager:
         
         self.log = LogWrapper(
             self.log_file,
+            logger=logger_taskenv,
+            prefix=f"[{testbed_name}] [{self.instance_id}]",
+        )
+        
+        self.test_case_log = LogWrapper(
+            self.test_case_log_file,
             logger=logger_taskenv,
             prefix=f"[{testbed_name}] [{self.instance_id}]",
         )
@@ -173,6 +183,20 @@ class TaskEnvContextManager:
                 "stderr": subprocess.STDOUT,
             },
             logger=self.log,
+        )
+        
+        self.test_case_exec = ExecWrapper(
+            subprocess_args={
+                "cwd": self.repo_dir,
+                "check": True,
+                # Change shell to True to use shell features
+                "shell": False,
+                # "capture_output": False,
+                "universal_newlines": True,
+                "stdout": subprocess.PIPE,
+                "stderr": subprocess.STDOUT,
+            },
+            logger=self.test_case_log,
         )
 
     def add_coverage_tox(self, config_file):
@@ -405,7 +429,7 @@ class TaskEnvContextManager:
                 self.log.write(f"Test Script: {test_cmd};\n")
 
             start = time.time()
-            out_test = self.exec(
+            out_test = self.test_case_exec(
                 test_cmd, shell=True, timeout=self.timeout, check=False, raise_error=False
             )
             end = time.time()
@@ -539,6 +563,7 @@ class TaskEnvContextManager:
         os.chdir(self.cwd)
         try:
             os.chmod(self.log_file, 0o666)
+            os.chmod(self.test_case_log_file, 0o666)
             os.chmod(self.test_data_file, 0o666)
             os.chmod(self.vulnerability_data_file, 0o666)
         except Exception as e:

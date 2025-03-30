@@ -47,8 +47,20 @@ def get_vulnerabilities_type_count(vulnerabilities, cwe_id: str = "all", locatio
             cwes = [_id for _id in RULES[vuln["ruleId"]] if _id in CWE_LIST]
         for cwe in cwes:
             if cwe not in type_count:
-                type_count[cwe] = 0
-            type_count[cwe] += 1
+                type_count[cwe] = []
+            type_count[cwe].append(vuln)
     return type_count
+
+def get_vulnerability_type(vulnerability):
+    """
+    Get the type of a vulnerability.
+    
+    Args:
+        vulnerability (dict): A vulnerability dictionary.
+        
+    Returns:
+        str: The type of the vulnerability.
+    """
+    return RULES[vulnerability["ruleId"]]
             
    
