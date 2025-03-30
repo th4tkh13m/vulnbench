@@ -1,0 +1,23 @@
+FROM python:3.10-slim
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libpq-dev \
+    git \
+    wget \
+    zstd \
+    && rm -rf /var/lib/apt/lists/*
+
+# Download CodeQL
+RUN wget https://github.com/github/codeql-action/releases/download/codeql-bundle-v2.20.7/codeql-bundle-linux64.tar.zst
+
+# Unpack CodeQL to /codeql
+RUN mkdir /codeql
+RUN tar -I zstd -xf codeql-bundle-linux64.tar.zst -C /codeql
+
+# Add CodeQL to PATH
+ENV PATH="/codeql/codeql:${PATH}"
+
+# Download security rules
+RUN codeql pack download githubsecuritylab/codeql-python-queries
