@@ -7,7 +7,7 @@ import subprocess
 import time
 import os
 
-from swebench_docker.constants import MAP_VERSION_TO_INSTALL
+from swebench_docker.constants import KEY_ID, KEY_INSTANCE_ID
 
 logger = logging.getLogger(__name__)
 
@@ -15,22 +15,22 @@ logger = logging.getLogger(__name__)
 async def run_docker_evaluation(task_instance: dict, namespace: str, log_dir: str, timeout: int = 900, log_suffix: str = "", verbose: bool = False, base64_instance: bool = True):
     repo_name = task_instance['repo'].replace("/", "_")
 
-    specifications = MAP_VERSION_TO_INSTALL[task_instance["repo"]][task_instance["version"]]
-    image_prefix = "swe-bench"
+    # specifications = MAP_VERSION_TO_INSTALL[task_instance["repo"]][task_instance["version"]]
+    # image_prefix = "swe-bench"
 
     # TODO: Change this when deciding
-    if "packages" in specifications and specifications["packages"] == "environment.yml":
-        container_log_dir = '/home/swe-bench/logs'
-    else:
-        container_log_dir = '/opt/logs'
+    # if "packages" in specifications and specifications["packages"] == "environment.yml":
+    #     container_log_dir = '/home/swe-bench/logs'
+    # else:
+    #     container_log_dir = '/opt/logs'
 
-    if specifications.get("instance_image", False):
-        docker_image = f"{namespace}/{image_prefix}-{repo_name}-instance:{task_instance['instance_id']}"
-    else:
-        docker_image = f"{namespace}/{image_prefix}-{repo_name}-testbed:{task_instance['version']}"
-
+    # if specifications.get("instance_image", False):
+    #     docker_image = f"{namespace}/{image_prefix}-{repo_name}-instance:{task_instance['instance_id']}"
+    # else:
+    #     docker_image = f"{namespace}/{image_prefix}-{repo_name}-testbed:{task_instance['version']}"
+    docker_image = "__".join(task_instance[KEY_INSTANCE_ID].split("__")[:-1] + [task_instance["base_commit"]])
     swebench_docker_fork_dir = os.environ.get("SWEBENCH_DOCKER_FORK_DIR")
-
+    container_log_dir = '/log'
     if swebench_docker_fork_dir:
         # Create a temporary file to store the task_instance JSON
         tmpfile_path = tempfile.mktemp(suffix='.json')
@@ -46,11 +46,11 @@ async def run_docker_evaluation(task_instance: dict, namespace: str, log_dir: st
             # for some reason, swebench_docker has different locations for the different containers :(
             # so we need to map all of them to make it work
             '-v', f"{swebench_docker_fork_dir}/swebench_docker:/opt/swebench_docker:ro",
-            '-v', f"{swebench_docker_fork_dir}/swebench_docker:/home/swe-bench/swebench_docker:ro",
-            '-v', f"{swebench_docker_fork_dir}/swebench_docker:/home/swe-bench/swebench:ro",
+            '-v', f"{swebench_docker_fork_dir}/swebench_docker:/vulnbench/swebench_docker:ro",
+            '-v', f"{swebench_docker_fork_dir}/swebench_docker:/vulnbench/swebench:ro",
             # =======
             # Map file instead pass the instance as env var to avoid "Argument list too long" error
-            '-v', f"{tmpfile_path}:/home/swe-bench/task_instance.json:ro",
+            '-v', f"{tmpfile_path}:/vulnbench/task_instance.json:ro",
             '-e', f"LOG_DIR={container_log_dir}",
             '-e', f"TIMEOUT={timeout}",
             '-e', f"LOG_SUFFIX={log_suffix}",
@@ -67,6 +67,7 @@ async def run_docker_evaluation(task_instance: dict, namespace: str, log_dir: st
             '-e', f"LOG_DIR={container_log_dir}",
             '-e', f"TIMEOUT={timeout}",
             '-e', f"LOG_SUFFIX={log_suffix}",
+            '-e', f"TESTBED_NAME={repo_name}",
             docker_image
         ]
 

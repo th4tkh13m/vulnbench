@@ -14,7 +14,6 @@ from swebench_docker.constants import (
     KEY_BASELINES,
     KEY_MODEL,
     KEY_PREDICTIONS,
-    KEY_TEST_FILE_PATH,
     MAP_REPO_TO_TEST_FRAMEWORK,
     SETTING_PROMPT_MAP,
     TESTS_CONFIG,
@@ -37,7 +36,6 @@ logger = logging.getLogger("evaluate_instance")
 def main(
     task_instance: dict,
     testbed_name: str,
-    setting: str,
     repo_dir: str,
     log_dir: str,
     timeout: Optional[int],
@@ -49,14 +47,10 @@ def main(
     logger.info(
         "Instance ID: "
         + task_instance["instance_id"]
-        + "\nID: "
-        + task_instance["id"]
         + "\nTestbed: "
         + testbed_name
         + "\nLog dir: "
         + log_dir
-        + "\nSetting: "
-        + setting
     )
 
     # if only_baseline:
@@ -69,7 +63,6 @@ def main(
 
     with TaskEnvContextManager(
         task_instance,
-        setting,
         testbed_name,
         repo_dir,
         log_dir,
@@ -115,31 +108,29 @@ def main(
             sys.exit(1)
         
         
-
-
 if __name__ == "__main__":
-    # TASK_INSTANCE_JSON = "/home/swe-bench/task_instance.json"
-    # if os.path.exists(TASK_INSTANCE_JSON):
-    #     with open(TASK_INSTANCE_JSON, "r") as f:
-    #         task_instance = json.load(f)
-    # else:
-    #     instance_encoded = os.getenv("INSTANCE")
-    #     if instance_encoded is None:
-    #         raise ValueError("INSTANCE environment variable is not set")
-    #     task_instance = json.loads(base64.b64decode(instance_encoded).decode("utf-8"))
-    # log_dir = os.getenv("LOG_DIR")
-    # if log_dir is None:
-    #     raise ValueError("LOG_DIR environment variable is not set")
+    TASK_INSTANCE_JSON = "/vulnbench/task_instance.json"
+    if os.path.exists(TASK_INSTANCE_JSON):
+        with open(TASK_INSTANCE_JSON, "r") as f:
+            task_instance = json.load(f)
+    else:
+        instance_encoded = os.getenv("INSTANCE")
+        if instance_encoded is None:
+            raise ValueError("INSTANCE environment variable is not set")
+        task_instance = json.loads(base64.b64decode(instance_encoded).decode("utf-8"))
+    log_dir = os.getenv("LOG_DIR", "/log")
+    if log_dir is None:
+        raise ValueError("LOG_DIR environment variable is not set")
 
-    # testbed_name = os.getenv("TESTBED_NAME")
-    # if testbed_name is None:
-    #     raise ValueError("TESTBED_NAME environment variable is not set")
+    testbed_name = os.getenv("TESTBED_NAME")
+    if testbed_name is None:
+        raise ValueError("TESTBED_NAME environment variable is not set")
 
-    # repo_dir = os.getenv("REPO_DIR") if os.getenv("REPO_DIR") else os.getenv("TESTBED")
-    # if repo_dir is None:
-    #     raise ValueError("REPO_DIR environment variable is not set")
+    repo_dir = os.getenv("REPO_DIR", "/app") if os.getenv("REPO_DIR", "/app") else os.getenv("TESTBED")
+    if repo_dir is None:
+        raise ValueError("REPO_DIR environment variable is not set")
 
-    timeout = os.getenv("TIMEOUT")
+    timeout = os.getenv("TIMEOUT", 600)
     int_timeout: Optional[int] = None
     if timeout is not None:
         try:
@@ -147,38 +138,6 @@ if __name__ == "__main__":
         except ValueError:
             raise ValueError("TIMEOUT environment variable must be an integer or None")
 
-    # setting = os.getenv("SETTING")
-    # if setting is None:
-    #     raise ValueError("SETTING environment variable is not set")
-
-    # For testing only
-    # TODO: Remove this since this is for testing only.
-    # We will set the task_instance to be "ytdl-org__youtube-dl__420d53387cff54ea1fccca061438d59bdb50a39c"
-    
-    task_instance = {
-        "id": "ytdl-org__youtube-dl__420d53387cff54ea1fccca061438d59bdb50a39c",
-        "instance_id": "ytdl-org__youtube-dl__420d53387cff54ea1fccca061438d59bdb50a39c",
-        "repo": "ytdl-org/youtube-dl",
-        # Simple new line add at the beginning to test the code. File to add new line: youtube_dl/socks.py
-        "model_patch": '''diff --git a/youtube_dl/socks.py b/youtube_dl/socks.py
-index e69de29..d25fabe 100644
---- a/youtube_dl/socks.py
-+++ b/youtube_dl/socks.py
-@@ -1,6 +1,7 @@
-+""" This is a fake patch adding a new line """
- # Public Domain SOCKS proxy protocol implementation
- # Adapted from https://gist.github.com/bluec0re/cafd3764412967417fd3
- 
- from __future__ import unicode_literals''',
-        "test_cmd": "coverage run -m nose test --verbose $test_set $multiprocess_args",
-        "model_name_or_path": "Baseline",
-    }
-    
-    testbed_name = "ytdl-org__youtube-dl__420d53387cff54ea1fccca061438d59bdb50a39c"
-    setting = "none"
-    repo_dir = "/app"
-    log_dir = "/log"
-    int_timeout = 600
 
     main(
         task_instance=task_instance,
@@ -186,7 +145,6 @@ index e69de29..d25fabe 100644
         repo_dir=repo_dir,
         log_dir=log_dir,
         timeout=int_timeout,
-        setting=setting,
         image_type=os.getenv("IMAGE_TYPE", "python"),
         curate_data=os.getenv("CURATE_DATA", "false") == "true",
     )

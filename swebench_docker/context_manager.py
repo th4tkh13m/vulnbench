@@ -62,6 +62,15 @@ class JSONWrapper:
     def write_to_json(self, data: dict):
         with open(self.file_path, "w") as f:
             json.dump(data, f, indent=4)
+            
+class TextWrapper:
+    def __init__(self, file_path: str):
+        # Test case path should be a json file path
+        self.file_path = file_path
+        
+    def write_to_text(self, data: str):
+        with open(self.file_path, "w") as f:
+            f.write(data)
 
 
 class ExecWrapper:
@@ -107,7 +116,6 @@ class TaskEnvContextManager:
     def __init__(
         self,
         task_instance: dict,
-        setting: str,
         testbed_name: str,
         repo_dir: str,
         log_dir: str,
@@ -116,7 +124,7 @@ class TaskEnvContextManager:
         image_type: str = "conda",
     ):
         self.instance_id = task_instance[KEY_INSTANCE_ID]
-        self.id = task_instance[KEY_ID]
+        # self.instance_id = task_instance[KEY_ID]
         self.instance = task_instance
         self.testbed_name = testbed_name
         self.repo_dir = repo_dir
@@ -134,26 +142,29 @@ class TaskEnvContextManager:
 
         self.timeout = timeout
 
-        log_file_name = f"{self.id}.{model}.{setting}.eval.log"
-        test_case_log_file_name = f"{self.id}.{model}.{setting}.eval.test_case.log"
-        test_data_file_name = f"{self.id}.{model}.{setting}.eval.test_case.json"
+        log_file_name = f"{self.instance_id}.{model}.eval.log"
+        test_case_log_file_name = f"{self.instance_id}.{model}.eval.test_case.log"
+        coverage_file_name = f"{self.instance_id}.{model}.eval.coverage.json"
         vulnerability_data_file_name = (
-            f"{self.id}.{model}.{setting}.eval.vulnerability.json"
+            f"{self.instance_id}.{model}.eval.vulnerability.json"
         )
+        patch_file_name = f"{self.instance_id}.{model}.eval.patch"
 
-        
+        self.patch_file = os.path.join(
+            log_dir, patch_file_name
+        )
         self.log_file = os.path.join(log_dir, log_file_name)
         self.test_case_log_file = os.path.join(
             log_dir, test_case_log_file_name
         )
-        self.test_data_file = os.path.join(
-            log_dir, test_data_file_name
+        self.coverage_file = os.path.join(
+            log_dir, coverage_file_name
         )
         self.vulnerability_data_file = os.path.join(
             log_dir, vulnerability_data_file_name
         )
         
-        self.test_data = JSONWrapper(self.test_data_file)
+        self.coverage_data = JSONWrapper(self.coverage_file)
         self.vulnerability_data = JSONWrapper(self.vulnerability_data_file)
         
         
@@ -168,6 +179,10 @@ class TaskEnvContextManager:
             logger=logger_taskenv,
             prefix=f"[{testbed_name}] [{self.instance_id}]",
         )
+        self.patch = TextWrapper(
+            self.patch_file,
+        )
+
         
         self.log.write(self.repo_dir)
 
@@ -326,6 +341,8 @@ class TaskEnvContextManager:
 
         with open(patch_path, "w") as f:
             f.write(patch)
+            
+        
 
 
         # Apply patch to testbed directory
@@ -388,6 +405,9 @@ class TaskEnvContextManager:
         self.log.write(f"{log_cmd} patch successful ({patch_type})")
         with open(self.log_file, "a") as f:
             f.write(f"{APPLY_PATCH_PASS} ({patch_type})\n")
+        
+        self.log.write("Writing patch to file")
+        self.patch.write_to_text(patch)
         return True
 
 
@@ -467,7 +487,7 @@ class TaskEnvContextManager:
                     coverage_data = json.load(cov_file)
                     
                     # Save coverage data to file
-                    self.test_data.write_to_json(coverage_data)
+                    self.coverage_data.write_to_json(coverage_data)
                     # cov_success = True
 
 
@@ -564,7 +584,8 @@ class TaskEnvContextManager:
         try:
             os.chmod(self.log_file, 0o666)
             os.chmod(self.test_case_log_file, 0o666)
-            os.chmod(self.test_data_file, 0o666)
+            os.chmod(self.coverage_file, 0o666)
             os.chmod(self.vulnerability_data_file, 0o666)
+            os.chmod(self.patch_file, 0o666)
         except Exception as e:
             self.log.write(f"Error changing file permissions: {e}", level=ERROR)

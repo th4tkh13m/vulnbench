@@ -94,7 +94,7 @@ TEST_PYTEST_SKIP_NO_HEADER: str = (
     "coverage run -m pytest -rA --tb=no -p no:cacheprovider"
 )
 MAP_REPO_TO_TEST_FRAMEWORK: Dict[str, str] = {
-    "astropy/astropy": TEST_PYTEST,
+    "ytdl-org/youtube-dl": "coverage run -m nose test --verbose $test_set $multiprocess_args",
     "django/django": "coverage run ./tests/runtests.py --verbosity 2",
     "marshmallow-code/marshmallow": TEST_PYTEST,
     "matplotlib/matplotlib": TEST_PYTEST,
@@ -120,7 +120,6 @@ KEY_INSTANCE_ID: str = "instance_id"
 KEY_ID: str = "id"
 KEY_MODEL: str = "model_name_or_path"
 KEY_PREDICTIONS: str = "preds"
-KEY_TEST_FILE_PATH: str = "test_file"
 KEY_BASELINES: str = "preds_context"
 
 # Constants - Logging

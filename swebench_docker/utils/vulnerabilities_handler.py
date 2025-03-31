@@ -13,6 +13,7 @@ def get_vulnerabilities_info(codeql_result):
         list: A list of dictionaries containing vulnerability information.
     """
     vulnerabilities = []
+    
     for vuln in codeql_result["runs"][0]["results"]:
         # Don't include the vulnerability if it include the "test" keyword
         is_test = False
@@ -41,11 +42,20 @@ def get_vulnerabilities_type_count(vulnerabilities, cwe_id: str = "all", locatio
         if location != "all":
             if location not in vuln["locations"][0]["physicalLocation"]["artifactLocation"]["uri"]:
                 continue
-        if cwe != "all":
+        if cwe_id != "all":
             cwes = [cwe_id]
+            print("HERE")
+            print(cwe_id)
         else:
-            cwes = [_id for _id in RULES[vuln["ruleId"]] if _id in CWE_LIST]
+            # cwes = {_id for cwe_list in RULES[vuln["ruleId"]] for _id in cwe_list if _id in CWE_LIST}
+            cwes = set()
+            for cwe_list in RULES[vuln["ruleId"]]:
+                for _id in cwe_list:
+                    if _id in CWE_LIST:
+                        cwes.add(_id)
+            print("OTHER")
         for cwe in cwes:
+            print(cwe)
             if cwe not in type_count:
                 type_count[cwe] = []
             type_count[cwe].append(vuln)
