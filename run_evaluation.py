@@ -15,6 +15,7 @@ from swebench_docker.constants import (
 )
 from swebench_docker.run_docker import run_docker_evaluation
 from swebench_docker.utils.evaluation import get_instances, get_eval_refs
+from swebench_docker.utils.commit_handler import filter_git_diff
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"

@@ -8,9 +8,11 @@ import re
 from enum import Enum
 from typing import Callable, Dict, Optional, Tuple
 
+from datasets import load_dataset, load_from_disk
 from swebench_docker.constants import (
     INSTALL_FAIL,
     KEY_ID,
+    KEY_INSTANCE_ID,
     NON_TEST_EXTS,
     RESET_FAILED,
     TESTS_CONFIG,
@@ -66,18 +68,18 @@ def get_line_coverage(coverage_json: Dict) -> Dict[str, dict]:
             results[file_name] = result["executed_lines"]
     return results
     
-def check_resolved_vulnerability(vulnerability: Dict, old_report: Dict, new_report_fp: str, patch_str: str) -> bool:
+def check_resolved_vulnerability(vulnerability: Dict, old_report: list, new_report: Dict, patch_str: str) -> bool:
     
-    with open(new_report_fp, "r") as f:
-        new_report = json.load(f)
+    # with open(new_report_fp, "r") as f:
+    #     new_report = json.load(f)
     
     new_vulnerabilities = get_vulnerabilities_info(new_report)
-    old_vulnerabilities = get_vulnerabilities_info(old_report)
+    old_vulnerabilities = old_report
     
 
 
     # Get the target vulnerability CWE and locations
-    cwe_id = get_vulnerability_type(vulnerability)
+    cwe_id = get_vulnerability_type(vulnerability)[0]
     file_location_set = set()
     distinct_location_set = set()
     
@@ -190,27 +192,28 @@ def get_dir_eval(dir_path: str, task_instance: Dict) -> Dict[str, dict]:
         bool: whether the patch applied successfully
         dict: status map
     """
-    repo = get_repo_from_lp(dir_path)
+    repo = task_instance["repo"]
     # Get the test case status
     before_testcase_status = task_instance["testcase_status"]
     # Get the vulnerability status
-    before_all_vulnerabilities = task_instance["vulnerabilities"]
+    before_all_vulnerabilities = task_instance["vulnerability_report"]
     # Get target vulnerability
     target_vulnerability = task_instance["target_vulnerability"]
 
 
     results: Dict[str, dict] = {}
     
-    # There should be 4 files in the directory
+    # There should be 5 files in the directory
     # 1. .log
     # 2. test_case.json
     # 3. test_case.log
     # 4. vulnerability.json
+    # 5. .patch
     
-    # If there are not 4 files, return empty dict
+    # If there are not 5 files, return empty dict
     # TODO: validate this later, but return empty dict for now
     files = os.listdir(dir_path)
-    if len(files) != 4:
+    if len(files) != 5:
         return results
     
     # Open the 4 files
@@ -222,9 +225,11 @@ def get_dir_eval(dir_path: str, task_instance: Dict) -> Dict[str, dict]:
             testcase_fp = os.path.join(dir_path, file)
         if file.endswith(".json") and "vulnerability" in file:
             vulnerability_fp = os.path.join(dir_path, file)
-        if file.endswith(".json") and "test_case" in file:
+        if file.endswith(".json") and "coverage" in file:
             coverage_fp = os.path.join(dir_path, file)
-    
+        if file.endswith(".patch"):
+            patch_fp = os.path.join(dir_path, file)
+            
     # Open files
     with open(log_fp, "r") as f:
         log_content = f.read()
@@ -237,6 +242,10 @@ def get_dir_eval(dir_path: str, task_instance: Dict) -> Dict[str, dict]:
         
     with open(coverage_fp, "r") as f:
         coverage_content = json.load(f)
+        
+    # Get the patch content
+    with open(patch_fp, "r") as f:
+        patch_content = f.read()
         
     # Check if the patch applied successfully
     result = {
@@ -258,6 +267,7 @@ def get_dir_eval(dir_path: str, task_instance: Dict) -> Dict[str, dict]:
         
     # Get the test case status
     test_case_handler = TESTCASE_HANDLER.get(repo, None)
+    print(repo)
     if test_case_handler is None:
         raise ValueError(f"Test case handler not found for repo {repo}")
     after_testcase_status = test_case_handler(testcase_log_content)
@@ -270,7 +280,7 @@ def get_dir_eval(dir_path: str, task_instance: Dict) -> Dict[str, dict]:
     
     # Get the vulnerability status
     result["vulnerability_resolved"] = check_resolved_vulnerability(
-        target_vulnerability, before_all_vulnerabilities, vulnerability_content, task_instance["model_patch"]
+        target_vulnerability, before_all_vulnerabilities, vulnerability_content, patch_content
     )
     
     # Get the vulnerabilities found
@@ -312,8 +322,8 @@ def get_eval_reports_for_instance_dir(
             continue
         try:
             # Get eval logs
-            eval_sm = get_dir_eval(eval_dir)
             instance_id = eval_dir.split("/")[-1].split(".")[0]
+            eval_sm = get_dir_eval(eval_dir, task_instance=swe_bench_instances[instance_id])
 
             # report = (
             #     get_eval_report(eval_sm, swe_bench_instances, instance_id, is_baseline)
@@ -438,7 +448,6 @@ def get_eval_reports_for_dir(
     swe_bench_instances: dict,
     model_name,
     callback: Optional[Callable[[str], bool]] = None,
-    verbose=False,
     raw_only=False,
     is_baseline=False,
 ) -> dict:
@@ -453,9 +462,9 @@ def get_eval_reports_for_dir(
         raise ValueError(f"Path {eval_dir} does not exist")
     # logs_list = [x for x in glob.glob(os.path.join(eval_dir, f"*{model_name}*.log"))]
     
-    repo_dirs = os.listdir(eval_dir)
+    repo_dirs = [os.path.join(eval_dir, x) for x in os.listdir(eval_dir)]
     return get_eval_reports_for_instance_dir(
-        repo_dirs, swe_bench_instances, callback, verbose, raw_only, is_baseline
+        repo_dirs, swe_bench_instances, callback, raw_only, is_baseline
     )
 
 
@@ -499,7 +508,6 @@ def get_model_eval_summary(
             swe_bench_instances,
             is_baseline=is_baseline,
             callback=criteria_eval_sm,
-            verbose=False,
             model_name=model_name,
         )
     else:
@@ -507,7 +515,6 @@ def get_model_eval_summary(
             eval_dir,
             swe_bench_instances,
             is_baseline=is_baseline,
-            verbose=False,
             model_name=model_name,
         )
 
@@ -522,9 +529,10 @@ def get_model_eval_summary(
     total_metrics: Dict[str, list] = {}
     for fn in report_net:
         for key in report_net[fn]:
-            if key not in total_metrics and key in ["patch_applied", "testcase_status", "vulnerability_resolved"]:
-                total_metrics[key] = []
-            total_metrics[key].append(report_net[fn][key])
+            if key in ["patch_applied", "testcase_status", "vulnerability_resolved"]:
+                if key not in total_metrics:
+                    total_metrics[key] = []
+                total_metrics[key].append(report_net[fn][key])
     for met in total_metrics:
         cleansed_metrics = [e for e in total_metrics[met] if e != -1]
         if len(cleansed_metrics) == 0:
@@ -628,3 +636,24 @@ def get_instances(instance_path: str) -> list:
     with open(instance_path) as f:
         task_instances = json.load(f)
     return task_instances
+
+
+def get_eval_refs(data_path_or_name):
+    decode_keys = False
+    if os.path.isfile(data_path_or_name):
+        if data_path_or_name.endswith(".jsonl"):
+            data = [json.loads(l) for l in open(data_path_or_name).readlines()]
+        elif data_path_or_name.endswith(".json"):
+            data = json.load(open(data_path_or_name, "r"))
+    elif os.path.isdir(data_path_or_name):
+        data = load_from_disk(data_path_or_name)
+        decode_keys = True
+    else:
+        data = load_dataset(data_path_or_name)
+        decode_keys = True
+    if isinstance(data, dict):
+        all_data = list()
+        all_data.extend(data["test"])
+        data = all_data
+
+    return {d[KEY_INSTANCE_ID]: d for d in data}
