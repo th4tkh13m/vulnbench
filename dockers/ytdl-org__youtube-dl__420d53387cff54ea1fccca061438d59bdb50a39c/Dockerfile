@@ -1,4 +1,4 @@
-FROM vulnbench-base:3.9
+FROM th4tkh13m:vulnbench-base:3.9
 
 # Clone youtube-dl to /app
 RUN git clone https://github.com/ytdl-org/youtube-dl.git  /app

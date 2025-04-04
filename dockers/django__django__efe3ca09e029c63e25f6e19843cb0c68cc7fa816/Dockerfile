@@ -1,4 +1,4 @@
-FROM vulnbench-base:3.12
+FROM th4tkh13m:vulnbench-base:3.12
 
 # Clone django to /app
 RUN git clone https://github.com/django/django.git /app
