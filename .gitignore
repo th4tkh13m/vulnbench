@@ -10,3 +10,6 @@ __pycache__/
 *.egg
 *.whl
 *.tar.gz
+
+run_test.py
+*.stamp
