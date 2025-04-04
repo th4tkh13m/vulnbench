@@ -294,8 +294,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "--file_source",
         type=str,
-        default="oracle",
-        choices=["oracle", "bm25", "all"],
+        default="vulnerable",
+        choices=["vulnerable", "related", "bm25", "all"],
         help="How to select the files to use in context.",
     )
     parser.add_argument(

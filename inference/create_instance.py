@@ -334,7 +334,7 @@ PROMPT_FUNCTIONS = {
 #             instance["hits"] = list()
 
 
-def get_oracle_filenames(instance):
+def get_related_filenames(instance):
     """
     Returns the filenames that are changed in the patch
     """
@@ -350,6 +350,14 @@ def get_oracle_filenames(instance):
                 "artifactLocation"]["uri"]
             
         )
+    return source_files
+
+def vulnerable_filenames(instance):
+    source_files = set()
+    for location in instance["target_vulnerability"]["locations"]:
+        if "test" in location["physicalLocation"]["artifactLocation"]["uri"]:
+            continue
+        source_files.add(location["physicalLocation"]["artifactLocation"]["uri"])
     return source_files
 
 
@@ -441,9 +449,13 @@ def add_text_inputs(
                                 tokenizer_func(base_text_inputs, tokenizer)
                             )
 
-                        if file_source == "oracle":
+                        if file_source == "related":
                             processed_instance["file_contents"] = ingest_files(
-                                get_oracle_filenames(processed_instance)
+                                get_related_filenames(processed_instance)
+                            )
+                        elif file_source == "vulnerable":
+                            processed_instance["file_contents"] = ingest_files(
+                                vulnerable_filenames(processed_instance)
                             )
                         # elif file_source == "bm25":
                         #     processed_instance["file_contents"] = ingest_files(
