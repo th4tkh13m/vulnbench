@@ -7,6 +7,7 @@ all: \
 	dockers/red-hat-storage__ocs-ci__29c57497850150833cbd5f514b3c40289b6f4676/.Dockerfile.stamp \
 	dockers/ytdl-org__youtube-dl__420d53387cff54ea1fccca061438d59bdb50a39c/.Dockerfile.stamp \
 	dockers/PyCQA__bandit__b983c276759233e68ef236ed6f34e07e038327f5/.Dockerfile.stamp \
+	dockers/transferwise__pipelinewise__3d8e7bc6214a6876ec3871ca4b4aca6bbe27ba17/.Dockerfile.stamp \
 	$(NULL) \
 
 dockers/base/.Dockerfile.3.9.stamp: dockers/base/Dockerfile.3.9 
@@ -33,6 +34,9 @@ dockers/ytdl-org__youtube-dl__420d53387cff54ea1fccca061438d59bdb50a39c/.Dockerfi
 dockers/PyCQA__bandit__b983c276759233e68ef236ed6f34e07e038327f5/.Dockerfile.stamp: dockers/PyCQA__bandit__b983c276759233e68ef236ed6f34e07e038327f5/Dockerfile dockers/base/.Dockerfile.3.9.stamp
 	docker build --network=host -t th4tkh13m/PyCQA__bandit__b983c276759233e68ef236ed6f34e07e038327f5 -f dockers/PyCQA__bandit__b983c276759233e68ef236ed6f34e07e038327f5/Dockerfile .
 	touch dockers/PyCQA__bandit__b983c276759233e68ef236ed6f34e07e038327f5/.Dockerfile.stamp
+dockers/transferwise__pipelinewise__3d8e7bc6214a6876ec3871ca4b4aca6bbe27ba17/.Dockerfile.stamp: dockers/transferwise__pipelinewise__3d8e7bc6214a6876ec3871ca4b4aca6bbe27ba17/Dockerfile dockers/base/.Dockerfile.3.10.stamp
+	docker build --network=host -t th4tkh13m/transferwise__pipelinewise__3d8e7bc6214a6876ec3871ca4b4aca6bbe27ba17 -f dockers/transferwise__pipelinewise__3d8e7bc6214a6876ec3871ca4b4aca6bbe27ba17/Dockerfile .
+	touch dockers/transferwise__pipelinewise__3d8e7bc6214a6876ec3871ca4b4aca6bbe27ba17/.Dockerfile.stamp
 
 clean:
 	rm -f \
@@ -44,6 +48,7 @@ clean:
 		dockers/red-hat-storage__ocs-ci__29c57497850150833cbd5f514b3c40289b6f4676/.Dockerfile.stamp \
 		dockers/ytdl-org__youtube-dl__420d53387cff54ea1fccca061438d59bdb50a39c/.Dockerfile.stamp \
 		dockers/PyCQA__bandit__b983c276759233e68ef236ed6f34e07e038327f5/.Dockerfile.stamp \
+		dockers/transferwise__pipelinewise__3d8e7bc6214a6876ec3871ca4b4aca6bbe27ba17/.Dockerfile.stamp \
 		$(NULL)
 
 .PHONY: all clean
