@@ -263,7 +263,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--dataset_name_or_path",
         type=str,
-        default="princeton-nlp/SWE-bench",
+        # default="princeton-nlp/SWE-bench",
         help="Dataset to use for test set from HuggingFace Datasets or path to a save_to_disk directory.",
     )
     parser.add_argument(
