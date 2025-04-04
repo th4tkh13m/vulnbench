@@ -172,13 +172,78 @@ def make_code_text_edits_only(files_dict, patch, add_line_numbers=True):
         all_text += f"\n[end of {filename}]\n"
     return all_text.strip("\n")
 
-
-def prompt_style_2(instance):
-    premise = "You will be provided with a partial code base and an vulnerability statement explaining a problem to resolve."
+def prompt_style_2_cot(instance):
+    premise = "You will be provided with a partial code base and an vulnerability information that is needed to be resolved."
     readmes_text = make_code_text(instance["readmes"])
     code_text = make_code_text(instance["file_contents"])
     instructions = (
-        "I need you to solve this vulnerability by generating a single patch file that I can apply "
+        "I need you to fix this vulnerability by generating a single patch file that I can apply "
+        + "directly to this repository using git apply. Please respond with a single patch "
+        + "file in the following format."
+    )
+    problem_statement = get_vulnerability_prompt(instance)
+    final_text = [
+        premise,
+        "<vulnerability>",
+        problem_statement,
+        "</vulnerability>",
+        "<code>",
+        readmes_text,
+        code_text,
+        "</code>",
+        instructions,
+        "<patch>",
+        PATCH_EXAMPLE,
+        "</patch>",
+        "Let's start by thinking step by step."
+    ]
+    final_text = "\n".join(final_text)
+    return final_text
+
+def prompt_style_3_cot(instance):
+    premise = "You will be provided with a partial code base and an vulnerability information that is needed to be resolved."
+    readmes_text = make_code_text(instance["readmes"])
+    code_text = make_code_text(instance["file_contents"])
+    example_explanation = (
+        "Here is an example of a patch file. It consists of changes to the code base. "
+        + "It specifies the file names, the line numbers of each change, and the removed and added lines. "
+        + "A single patch file can contain changes to multiple files."
+    )
+    final_instruction = (
+        "I need you to fix the provided vulnerability by generating a single patch file that I can apply "
+        + "directly to this repository using git apply. Please respond with a single patch "
+        + "file in the format shown above."
+    )
+    problem_statement = get_vulnerability_prompt(instance)
+    final_text = [
+        premise,
+        "<vulnerability>",
+        problem_statement,
+        "</vulnerability>",
+        "",
+        "<code>",
+        readmes_text,
+        code_text,
+        "</code>",
+        "",
+        example_explanation,
+        "<patch>",
+        PATCH_EXAMPLE,
+        "</patch>",
+        "",
+        final_instruction,
+        "Let's start by thinking step by step. Respond below:",
+    ]
+    final_text = "\n".join(final_text)
+    return final_text
+
+
+def prompt_style_2(instance):
+    premise = "You will be provided with a partial code base and an vulnerability information that is needed to be resolved."
+    readmes_text = make_code_text(instance["readmes"])
+    code_text = make_code_text(instance["file_contents"])
+    instructions = (
+        "I need you to fix this vulnerability by generating a single patch file that I can apply "
         + "directly to this repository using git apply. Please respond with a single patch "
         + "file in the following format."
     )
@@ -202,11 +267,11 @@ def prompt_style_2(instance):
 
 
 def prompt_style_2_edits_only(instance):
-    premise = "You will be provided with a partial code base and an vulnerability statement explaining a problem to resolve."
+    premise = "You will be provided with a partial code base and an vulnerability information that is needed to be resolved."
     readmes_text = make_code_text(instance["readmes"])
     code_text = make_code_text_edits_only(instance["file_contents"], instance["patch"])
     instructions = (
-        "I need you to solve this vulnerability by generating a single patch file that I can apply "
+        "I need you to fix this vulnerability by generating a single patch file that I can apply "
         + "directly to this repository using git apply. Please respond with a single patch "
         + "file in the following format."
     )
@@ -230,7 +295,7 @@ def prompt_style_2_edits_only(instance):
 
 
 def prompt_style_3(instance):
-    premise = "You will be provided with a partial code base and an vulnerability statement explaining a problem to resolve."
+    premise = "You will be provided with a partial code base and an vulnerability information that is needed to be resolved."
     readmes_text = make_code_text(instance["readmes"])
     code_text = make_code_text(instance["file_contents"])
     example_explanation = (
@@ -239,7 +304,7 @@ def prompt_style_3(instance):
         + "A single patch file can contain changes to multiple files."
     )
     final_instruction = (
-        "I need you to solve the provided vulnerability by generating a single patch file that I can apply "
+        "I need you to fix the provided vulnerability by generating a single patch file that I can apply "
         + "directly to this repository using git apply. Please respond with a single patch "
         + "file in the format shown above."
     )
@@ -268,11 +333,11 @@ def prompt_style_3(instance):
 
 
 def full_file_gen(instance):
-    premise = "You will be provided with a partial code base and an vulnerability statement explaining a problem to resolve."
+    premise = "You will be provided with a partial code base and an vulnerability information that is needed to be resolved."
     readmes_text = make_code_text(instance["readmes"], add_line_numbers=False)
     code_text = make_code_text(instance["file_contents"], add_line_numbers=False)
     instructions = (
-        "I need you to solve this vulnerability by regenerating the full files in the code base that you would like to change. "
+        "I need you to fix this vulnerability by regenerating the full files in the code base that you would like to change. "
         + "You can change as many files as you like. "
         + "Please respond with a list of files and their revised contents in the following format."
     )
@@ -309,6 +374,8 @@ PROMPT_FUNCTIONS = {
     "style-3": prompt_style_3,
     "full_file_gen": full_file_gen,
     "style-2-edits-only": prompt_style_2_edits_only,
+    "style-2-cot": prompt_style_2_cot,
+    "style-3-cot": prompt_style_3_cot
 }
 
 
