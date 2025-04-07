@@ -107,6 +107,8 @@ def main(
             logger.error("Vulnerability scan failed")
             sys.exit(1)
         
+        logger.info("Evaluation succeeded")
+        
         
 if __name__ == "__main__":
     TASK_INSTANCE_JSON = "/vulnbench/task_instance.json"
