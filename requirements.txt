@@ -3,3 +3,9 @@ tqdm
 tokenizers
 chardet
 gitpython
+datasets
+tiktoken
+python-dotenv
+openai
+anthropic
+tenacity
