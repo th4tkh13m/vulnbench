@@ -28,7 +28,7 @@ async def run_docker_evaluation(task_instance: dict, namespace: str, log_dir: st
     #     docker_image = f"{namespace}/{image_prefix}-{repo_name}-instance:{task_instance['instance_id']}"
     # else:
     #     docker_image = f"{namespace}/{image_prefix}-{repo_name}-testbed:{task_instance['version']}"
-    docker_image = "__".join(task_instance[KEY_INSTANCE_ID].split("__")[:-1] + [task_instance["base_commit"]])
+    docker_image = f"{namespace}/{'__'.join(task_instance[KEY_INSTANCE_ID].split("__")[:-1] + [task_instance["base_commit"]])}"
     swebench_docker_fork_dir = os.environ.get("SWEBENCH_DOCKER_FORK_DIR")
     container_log_dir = '/log'
     if swebench_docker_fork_dir:

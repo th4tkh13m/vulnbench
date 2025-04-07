@@ -44,8 +44,8 @@ def get_vulnerabilities_type_count(vulnerabilities, cwe_id: str = "all", locatio
                 continue
         if cwe_id != "all":
             cwes = [cwe_id]
-            print("HERE")
-            print(cwe_id)
+            # print("HERE")
+            # print(cwe_id)
         else:
             # cwes = {_id for cwe_list in RULES[vuln["ruleId"]] for _id in cwe_list if _id in CWE_LIST}
             cwes = set()
@@ -53,9 +53,9 @@ def get_vulnerabilities_type_count(vulnerabilities, cwe_id: str = "all", locatio
                 for _id in cwe_list:
                     if _id in CWE_LIST:
                         cwes.add(_id)
-            print("OTHER")
+            # print("OTHER")
         for cwe in cwes:
-            print(cwe)
+            # print(cwe)
             if cwe not in type_count:
                 type_count[cwe] = []
             type_count[cwe].append(vuln)

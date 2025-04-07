@@ -164,18 +164,23 @@ def check_testcase_statuses(bef_testcase_status: Dict[str, list[str]], after_tes
     for test_case in bef_testcase_status:
         if bef_testcase_status[test_case] == TestStatus.PASSED.value:
             if test_case not in after_testcase_status or after_testcase_status[test_case] != TestStatus.PASSED.value:
+                print(f"Test case {test_case} failed after patch")
                 return False
         elif bef_testcase_status[test_case] == TestStatus.FAILED.value:
             if test_case not in after_testcase_status:
+                print(f"Test case {test_case} not found after patch")
                 return False
         elif bef_testcase_status[test_case] == TestStatus.SKIPPED.value:
             if test_case not in after_testcase_status or after_testcase_status[test_case] == TestStatus.FAILED.value:
+                print(f"Test case {test_case} failed after patch")
                 return False
         elif bef_testcase_status[test_case] == TestStatus.ERROR.value:
             if test_case not in after_testcase_status:
+                print(f"Test case {test_case} not found after patch")
                 return False
         elif bef_testcase_status[test_case] == TestStatus.XFAIL.value:
             if test_case not in after_testcase_status or after_testcase_status[test_case] != TestStatus.XFAILED.value:
+                print(f"Test case {test_case} failed after patch")
                 return False
     
     return True
@@ -200,7 +205,7 @@ def get_dir_eval(dir_path: str, task_instance: Dict) -> Dict[str, dict]:
     # Get target vulnerability
     target_vulnerability = task_instance["target_vulnerability"]
 
-
+    # print(task_instance[KEY_INSTANCE_ID])
     results: Dict[str, dict] = {}
     
     # There should be 5 files in the directory
@@ -267,12 +272,12 @@ def get_dir_eval(dir_path: str, task_instance: Dict) -> Dict[str, dict]:
         
     # Get the test case status
     test_case_handler = TESTCASE_HANDLER.get(repo, None)
-    print(repo)
+    # print(repo)
     if test_case_handler is None:
         raise ValueError(f"Test case handler not found for repo {repo}")
     after_testcase_status = test_case_handler(testcase_log_content)
     
-    result["testcase_status"] = check_testcase_statuses(
+    result["testcase_status_compare"] = check_testcase_statuses(
         before_testcase_status, after_testcase_status
     )
     
@@ -322,16 +327,23 @@ def get_eval_reports_for_instance_dir(
             continue
         try:
             # Get eval logs
+            # print(eval_dir)
             instance_id = eval_dir.split("/")[-1].split(".")[0]
+            print(instance_id)
             eval_sm = get_dir_eval(eval_dir, task_instance=swe_bench_instances[instance_id])
-
+            if eval_sm != {}:
+                print("Has Report")
+            else:
+                print("No Report") 
             # report = (
             #     get_eval_report(eval_sm, swe_bench_instances, instance_id, is_baseline)
             #     if not raw_only
             #     else eval_sm
             # )
+            
             report_tests[get_file_name_from_lp(eval_dir)] = eval_sm
         except Exception as e:
+            print("error in instance", instance_id)
             print(e)
             raise e
             print(f"Skipping instance {get_file_name_from_lp(eval_log)}")
@@ -341,9 +353,13 @@ def get_eval_reports_for_instance_dir(
     # Merge settings
     for eval_dir in eval_dirs:
         instance_id = eval_dir.split("/")[-1].split(".")[0]
+        # print(instance_id)
+        # print(get_file_name_from_lp(eval_dir))
         if instance_id not in report_final:
+            # print("Add")
             report_final[instance_id] = report_tests[get_file_name_from_lp(eval_dir)]
         else:
+            # print("Update")
             report_final[instance_id].update(
                 report_tests[get_file_name_from_lp(eval_dir)]
             )
@@ -501,7 +517,7 @@ def get_model_eval_summary(
             criteria_pred = lambda pred: repo in pred[KEY_ID]
             criteria_eval_sm = lambda eval_log: repo in eval_log
             preds = [x for x in preds if criteria_pred(x)]
-
+        # print("HERE")
         # Get reports
         report_net = get_eval_reports_for_dir(
             eval_dir,
@@ -511,6 +527,7 @@ def get_model_eval_summary(
             model_name=model_name,
         )
     else:
+        # print("else")
         report_net = get_eval_reports_for_dir(
             eval_dir,
             swe_bench_instances,
@@ -527,9 +544,16 @@ def get_model_eval_summary(
     format_dec = lambda x: round(x * 100, 2)
 
     total_metrics: Dict[str, list] = {}
+    print("Ở ĐÂY")
+    i = 0
     for fn in report_net:
+        # print(i)
+        # print(fn)
+        # print(report_net[fn])
+        i += 1
         for key in report_net[fn]:
-            if key in ["patch_applied", "testcase_status", "vulnerability_resolved"]:
+            # print(key)
+            if key in ["patch_applied", "testcase_status_compare", "vulnerability_resolved"]:
                 if key not in total_metrics:
                     total_metrics[key] = []
                 total_metrics[key].append(report_net[fn][key])

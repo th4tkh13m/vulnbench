@@ -124,9 +124,10 @@ def add_lines_list(content):
 def get_vulnerability_prompt(instance):
     target_vulnerability = instance["target_vulnerability"]
     # print("target_vulnerability", target_vulnerability)
-
+    end_line_text = f"End Line: {target_vulnerability['locations'][0]['physicalLocation']['region']['endLine']}" if target_vulnerability["locations"][0]["physicalLocation"]["region"].get("endLine") else ""
     prompt = f"""CWE ID: {get_vulnerability_type(target_vulnerability)[0]}
-Location: {target_vulnerability["locations"][0]["physicalLocation"]["artifactLocation"]["uri"]}
+Vulnerable File: {target_vulnerability["locations"][0]["physicalLocation"]["artifactLocation"]["uri"]}
+Vulnerable Location: Start Line {target_vulnerability["locations"][0]["physicalLocation"]["region"]["startLine"]}, {end_line_text}
 Description: {target_vulnerability["message"]}
 """
     return prompt
