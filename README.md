@@ -3,6 +3,10 @@
 ## Running the prompting dataset
 ```sh
 python -m inference.create_text_dataset --dataset_name_or_path <dataset_name_or_path> --prompt_style <prompt_style> --output_dir <output_dir> --file_source <file_source> 
+
+# Example
+python -m  inference.create_text_dataset --dataset_name_or_path tmp/youtube_dl_vuln_dataset --output_dir tmp/datasets --splits test
+
 ```
 
 ## Running the inference script

@@ -1,3 +1,5 @@
 unidiff
 tqdm
 tokenizers
+chardet
+gitpython
