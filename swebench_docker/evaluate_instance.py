@@ -92,13 +92,7 @@ def main(
         
         
         # Print the file after patch: File path: /app/vulnerable.py
-        tcm.log.write("File after patch: ")
-        with open("/app/vulnerable.py", "r") as f:
-            lines = f.readlines()
-            for line in lines:
-                tcm.log.write(line.strip())
-                # print(line.strip())
-        
+
         # Run tests
         _, success = tcm.run_tests_task(
             task_instance)
