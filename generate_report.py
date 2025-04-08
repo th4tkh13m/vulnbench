@@ -4,6 +4,7 @@
 import argparse
 import json
 import re
+import os
 
 from swebench_docker.utils.evaluation import (
     get_eval_reports_for_dir,
@@ -26,8 +27,8 @@ def generate_report(
     report_net = get_eval_reports_for_dir(
         log_dir, instances, raw_only=True, model_name=model_name_or_path
     )
-
-    with open(f"{output_dir}/{model_name_or_path}_full.json", "w") as f:
+    filename = os.path.basename(predictions_path).replace(".jsonl", "")
+    with open(f"{output_dir}/{filename}_full.json", "w") as f:
         f.write(json.dumps(report_net, indent=4))
 
     summary = get_model_eval_summary(
@@ -38,7 +39,7 @@ def generate_report(
     )
 
 
-    with open(f"{output_dir}/{model_name_or_path}_summary.json", "w") as f:
+    with open(f"{output_dir}/{filename}_summary.json", "w") as f:
         f.write(json.dumps(summary, indent=4))
 
     # report = get_model_report(
