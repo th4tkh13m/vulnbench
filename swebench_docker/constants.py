@@ -84,7 +84,7 @@ QLS = [
 ]
 
 CODEQL_DATABASE_CREATION = "codeql database create --language=python --source-root=/app /codeql-database"
-CODEQL_DATABASE_ANALYZE = f"codeql database analyze /codeql-database {' '.join(QLS)} --format=sarif-latest --output=/vulnbench/codeql-results.sarif "
+CODEQL_DATABASE_ANALYZE = f"codeql database analyze /codeql-database {' '.join(QLS)} --format=sarif-latest --output=/vulnbench/codeql-results.sarif"
 
 
 
@@ -95,6 +95,7 @@ TEST_PYTEST_SKIP_NO_HEADER: str = (
 )
 MAP_REPO_TO_TEST_FRAMEWORK: Dict[str, str] = {
     "ytdl-org/youtube-dl": "coverage run -m nose test --verbose $test_set $multiprocess_args",
+    "th4tkh13m/test_cwe_078": TEST_PYTEST,
     "django/django": "coverage run ./tests/runtests.py --verbosity 2",
     "marshmallow-code/marshmallow": TEST_PYTEST,
     "matplotlib/matplotlib": TEST_PYTEST,

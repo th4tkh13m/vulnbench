@@ -406,8 +406,23 @@ class TaskEnvContextManager:
         with open(self.log_file, "a") as f:
             f.write(f"{APPLY_PATCH_PASS} ({patch_type})\n")
         
+        
         self.log.write("Writing patch to file")
         self.patch.write_to_text(patch)
+        
+        if revert:
+            self.log.write("Reverting patch")
+            
+            self.exec("git restore .".split(" "))
+                    # revert to the state of the repo before the patch was applied
+            output = self.exec(
+                f"git apply {init_diff_patch_path}".split(),
+                raise_error=False,
+                check=False,
+            )
+            self.log.write(
+                f"Output (git apply - revert to initial state): {output.stdout}"
+            )
         return True
 
 

@@ -80,16 +80,16 @@ def check_resolved_vulnerability(vulnerability: Dict, old_report: list, new_repo
 
     # Get the target vulnerability CWE and locations
     cwe_id = get_vulnerability_type(vulnerability)[0]
-    file_location_set = set()
-    distinct_location_set = set()
+    old_report_file_location_set = set()
+    old_report_distinct_location_set = set()
     
     # Get the file locations and line numbers of the vulnerability in the old report
     for location in vulnerability["locations"]:
         file_location = location["physicalLocation"]["artifactLocation"]["uri"]
         start_line = location["physicalLocation"]["region"]["startLine"]
         
-        file_location_set.add(file_location)
-        distinct_location_set.add(
+        old_report_file_location_set.add(file_location)
+        old_report_distinct_location_set.add(
             (file_location, start_line)
         )
         
@@ -97,17 +97,20 @@ def check_resolved_vulnerability(vulnerability: Dict, old_report: list, new_repo
     # in the new report compared to the old report for the same CWE
     # and file locations
     lower_vuln_file_count = False
-    vulns_at_locations_and_cwe = {}
-    for location in file_location_set:
+    vulns_at_locations_and_cwe_new_report = {}
+    for location in old_report_file_location_set:
         new_type_count = get_vulnerabilities_type_count(
             new_vulnerabilities, cwe_id, location
         )
+        
         old_type_count = get_vulnerabilities_type_count(
             old_vulnerabilities, cwe_id, location
         )
-        if len(new_type_count[cwe_id]) < len(old_type_count[cwe_id]):
+        if len(new_type_count.get(cwe_id, [])) < len(old_type_count.get(cwe_id, [])):
             lower_vuln_file_count = True
-        vulns_at_locations_and_cwe[location] = new_type_count
+        vulns_at_locations_and_cwe_new_report[location] = new_type_count
+        
+    
     
     
     # Check if there is reduction in the number of vulnerabilities
@@ -119,7 +122,7 @@ def check_resolved_vulnerability(vulnerability: Dict, old_report: list, new_repo
     old_type_count_all = get_vulnerabilities_type_count(
         old_vulnerabilities, cwe_id, "all"
     )
-    if len(new_type_count_all[cwe_id]) < len(old_type_count_all[cwe_id]):
+    if len(new_type_count_all.get(cwe_id, [])) < len(old_type_count_all.get(cwe_id, [])):
         lower_vuln_count = True
     else:
         lower_vuln_count = False
@@ -127,25 +130,29 @@ def check_resolved_vulnerability(vulnerability: Dict, old_report: list, new_repo
     # If there is reduction in the number of vulnerabilities
     # check if the reduced vulnerabilities contains the target vulnerability
     if lower_vuln_count and lower_vuln_file_count:
+        
         # Check mapping lines
         file_line_mapping = generate_line_mappings_after_to_bef(patch_str)
-        
+        # print(file_line_mapping)
         # resolving = T
-        for location in distinct_location_set:
+        for location in old_report_distinct_location_set:
+            # Get the file mapping
             mapping = file_line_mapping.get(location[0], None)
             if mapping is None:
                 # The patch did not change the file that includes the vulnerability
-                # Thus, the vulnerability is not resolved
-                return False
-            if location[1] in mapping:
+                # Thus, the vulnerability is not resolved?
+                # return False
+                continue
+            # if location[1] in mapping:
                 # Check if the line number of the vulnerability is in the mapping
                 # If it is, then the vulnerability is resolved
                 # Get the vulnerabilities at the location
-                vulns_at_location = vulns_at_locations_and_cwe[location[0]][cwe_id]
-                for vuln in vulns_at_location:
-                    if mapping[vuln["locations"][0]["physicalLocation"]["region"]["startLine"]] == location[1]:
-                        # The vulnerability is resolved
-                        return True
+            vulns_at_location_new_report_given_file_and_cwe = vulns_at_locations_and_cwe_new_report[location[0]][cwe_id]
+            for vuln in vulns_at_location_new_report_given_file_and_cwe:
+                if mapping[vuln["locations"][0]["physicalLocation"]["region"]["startLine"]] == location[1]:
+                    # The vulnerability is not resolved as it is still present in the new report
+                    return False
+        return True
     # If there is no reduction in the number of vulnerabilities
     # in the new report compared to the old report for the same CWE
     # and file locations, then the vulnerability is not resolved
@@ -320,7 +327,7 @@ def get_eval_reports_for_instance_dir(
     report_tests = {}
 
     from tqdm import tqdm
-
+    print(eval_dirs)
     for eval_dir in tqdm(eval_dirs):
         # Remove task instances that do not satisfy callback
         if callback is not None and not callback(eval_dir):
@@ -477,7 +484,7 @@ def get_eval_reports_for_dir(
     if not os.path.exists(eval_dir):
         raise ValueError(f"Path {eval_dir} does not exist")
     # logs_list = [x for x in glob.glob(os.path.join(eval_dir, f"*{model_name}*.log"))]
-    
+    # print("NICE")
     repo_dirs = [os.path.join(eval_dir, x) for x in os.listdir(eval_dir)]
     return get_eval_reports_for_instance_dir(
         repo_dirs, swe_bench_instances, callback, raw_only, is_baseline
@@ -518,6 +525,7 @@ def get_model_eval_summary(
             criteria_eval_sm = lambda eval_log: repo in eval_log
             preds = [x for x in preds if criteria_pred(x)]
         # print("HERE")
+        # print("Get reports")
         # Get reports
         report_net = get_eval_reports_for_dir(
             eval_dir,
@@ -544,7 +552,7 @@ def get_model_eval_summary(
     format_dec = lambda x: round(x * 100, 2)
 
     total_metrics: Dict[str, list] = {}
-    print("Ở ĐÂY")
+    # print("Ở ĐÂY")
     i = 0
     for fn in report_net:
         # print(i)

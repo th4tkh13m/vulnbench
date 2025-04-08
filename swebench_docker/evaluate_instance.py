@@ -74,22 +74,30 @@ def main(
         patch_type = PatchType.PATCH_PRED_TRY.value
 
         # If prediction patch doesn't apply, try to do some minor patch refactoring and try again
-        if not tcm.apply_patch(task_instance[KEY_PREDICTION], patch_type=patch_type) \
+        if not tcm.apply_patch(task_instance[KEY_PREDICTION], patch_type=patch_type, revert=True) \
                 and task_instance[KEY_PREDICTION] is not None \
                 and task_instance[KEY_PREDICTION] != "":
             task_instance[KEY_PREDICTION] = extract_minimal_patch(task_instance[KEY_PREDICTION])
             patch_type = PatchType.PATCH_PRED_MINIMAL_TRY.value
-            if not tcm.apply_patch(task_instance[KEY_PREDICTION], patch_type=patch_type):
+            if not tcm.apply_patch(task_instance[KEY_PREDICTION], patch_type=patch_type, revert=True):
                 logger.warning("Failed to apply prediction patch")
                 sys.exit(1)
 
-        tcm.apply_patch(task_instance[KEY_PREDICTION], patch_type=patch_type, revert=True)
+        tcm.apply_patch(task_instance[KEY_PREDICTION], patch_type=patch_type)
         # Set prediction patch label based on whether patch was edited
         if patch_type == PatchType.PATCH_PRED_MINIMAL_TRY.value:
             patch_type = PatchType.PATCH_PRED_MINIMAL.value
         else:
             patch_type = PatchType.PATCH_PRED.value     
         
+        
+        # Print the file after patch: File path: /app/vulnerable.py
+        tcm.log.write("File after patch: ")
+        with open("/app/vulnerable.py", "r") as f:
+            lines = f.readlines()
+            for line in lines:
+                tcm.log.write(line.strip())
+                # print(line.strip())
         
         # Run tests
         _, success = tcm.run_tests_task(

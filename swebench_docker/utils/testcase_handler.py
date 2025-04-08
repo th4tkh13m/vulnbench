@@ -206,5 +206,6 @@ def has_attribute_or_import_error(log_before):
 
     
 TESTCASE_HANDLER = {
-    "ytdl-org/youtube-dl": parse_log_django
+    "ytdl-org/youtube-dl": parse_log_django,
+    "th4tkh13m/test_cwe_078": parse_log_pytest,
 }
