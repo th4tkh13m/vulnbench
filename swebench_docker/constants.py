@@ -95,8 +95,26 @@ TEST_PYTEST_SKIP_NO_HEADER: str = (
 )
 MAP_REPO_TO_TEST_FRAMEWORK: Dict[str, str] = {
     "ytdl-org/youtube-dl": "coverage run -m nose test --verbose $test_set $multiprocess_args",
-    "th4tkh13m/test_cwe_078": TEST_PYTEST,
     "django/django": "coverage run ./tests/runtests.py --verbosity 2",
+    "red-hat-storage/ocs-ci": TEST_PYTEST + " --ignore=tests -c pytest_unittests.ini --cov=ocs_ci",
+    "PyCQA/bandit": "stestr run && coverage combine",
+    "BerriAI/litellm": "poetry run coverage run -m pytest tests/litellm/ --no-header -rA --tb=no -p no:cacheprovider", #TODO: Check this on coverage
+    "faircloth-lab/phyluce":  "coverage run -m pytest -vv phyluce/ --timeout=60 --no-header -rA --tb=no -p no:cacheprovider",
+    "Flexget/Flexget": "uv run coverage run -m pytest -n logical --dist loadgroup --no-header -rA --tb=no -p no:cacheprovider",
+    "fls-bioinformatics-core/genomics": "coverage run -m nosetests",
+    "linkml/linkml": "poetry run coverage run -m pytest --no-header -rA --tb=no -p no:cacheprovider",
+    "Microsoft/botbuilder-python": TEST_PYTEST,
+    "NVIDIA/NVFlare": TEST_PYTEST + " tests/unit_test",
+    "obsidianforensics/unfurl": TEST_PYTEST + " unfurl/tests", #TODO: Check this for logging
+    "pypa/pipenv": "pipenv run " + TEST_PYTEST,
+    "redhatinsights/insights-core": TEST_PYTEST,
+    "simpeg/simpeg": TEST_PYTEST + " --ignore=tests/docs",
+    "transferwise/pipelinewise": "coverage run --source=pipelinewise --parallel-mode -m pytest -v --no-header -rA --tb=no -p no:cacheprovider tests/units && coverage combine",
+    
+   
+   
+   
+    "th4tkh13m/test_cwe_078": TEST_PYTEST,
     "marshmallow-code/marshmallow": TEST_PYTEST,
     "matplotlib/matplotlib": TEST_PYTEST,
     "mwaskom/seaborn": "coverage run -m pytest --no-header -rA",

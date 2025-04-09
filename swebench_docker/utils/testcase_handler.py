@@ -208,4 +208,19 @@ def has_attribute_or_import_error(log_before):
 TESTCASE_HANDLER = {
     "ytdl-org/youtube-dl": parse_log_django,
     "th4tkh13m/test_cwe_078": parse_log_pytest,
+    "django/django": parse_log_django,
+    "red-hat-storage/ocs-ci": parse_log_pytest,
+    "PyCQA/bandit": parse_log_pytest, #TODO: Check this for logging
+    "BerriAI/litellm": parse_log_pytest,
+    "faircloth-lab/phyluce": parse_log_pytest,
+    "Flexget/Flexget": parse_log_pytest,
+    "fls-bioinformatics-core/genomics": parse_log_pytest,
+    "linkml/linkml": parse_log_pytest,
+    "Microsoft/botbuilder-python": parse_log_pytest,
+    "NVIDIA/NVFlare": parse_log_pytest,
+    "obsidianforensics/unfurl": parse_log_pytest,
+    "pypa/pipenv": parse_log_pytest,
+    "redhatinsights/insights-core": parse_log_pytest,
+    "simpeg/simpeg": parse_log_pytest,
+    "transferwise/pipelinewise": parse_log_pytest,
 }

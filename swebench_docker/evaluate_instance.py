@@ -51,6 +51,8 @@ def main(
         + testbed_name
         + "\nLog dir: "
         + log_dir
+        + "\nCurated data: "
+        + str(curate_data)
     )
 
     # if only_baseline:
@@ -70,28 +72,29 @@ def main(
         image_type=image_type,
     ) as tcm:
         
-        # Attempt to apply prediction
-        patch_type = PatchType.PATCH_PRED_TRY.value
+        if not curate_data:
+            # Attempt to apply prediction
+            patch_type = PatchType.PATCH_PRED_TRY.value
 
-        # If prediction patch doesn't apply, try to do some minor patch refactoring and try again
-        if not tcm.apply_patch(task_instance[KEY_PREDICTION], patch_type=patch_type, revert=True) \
-                and task_instance[KEY_PREDICTION] is not None \
-                and task_instance[KEY_PREDICTION] != "":
-            task_instance[KEY_PREDICTION] = extract_minimal_patch(task_instance[KEY_PREDICTION])
-            patch_type = PatchType.PATCH_PRED_MINIMAL_TRY.value
-            if not tcm.apply_patch(task_instance[KEY_PREDICTION], patch_type=patch_type, revert=True):
-                logger.warning("Failed to apply prediction patch")
-                sys.exit(1)
+            # If prediction patch doesn't apply, try to do some minor patch refactoring and try again
+            if not tcm.apply_patch(task_instance[KEY_PREDICTION], patch_type=patch_type, revert=True) \
+                    and task_instance[KEY_PREDICTION] is not None \
+                    and task_instance[KEY_PREDICTION] != "":
+                task_instance[KEY_PREDICTION] = extract_minimal_patch(task_instance[KEY_PREDICTION])
+                patch_type = PatchType.PATCH_PRED_MINIMAL_TRY.value
+                if not tcm.apply_patch(task_instance[KEY_PREDICTION], patch_type=patch_type, revert=True):
+                    logger.warning("Failed to apply prediction patch")
+                    sys.exit(1)
 
-        tcm.apply_patch(task_instance[KEY_PREDICTION], patch_type=patch_type)
-        # Set prediction patch label based on whether patch was edited
-        if patch_type == PatchType.PATCH_PRED_MINIMAL_TRY.value:
-            patch_type = PatchType.PATCH_PRED_MINIMAL.value
-        else:
-            patch_type = PatchType.PATCH_PRED.value     
-        
-        
-        # Print the file after patch: File path: /app/vulnerable.py
+            tcm.apply_patch(task_instance[KEY_PREDICTION], patch_type=patch_type)
+            # Set prediction patch label based on whether patch was edited
+            if patch_type == PatchType.PATCH_PRED_MINIMAL_TRY.value:
+                patch_type = PatchType.PATCH_PRED_MINIMAL.value
+            else:
+                patch_type = PatchType.PATCH_PRED.value     
+            
+            
+            # Print the file after patch: File path: /app/vulnerable.py
 
         # Run tests
         _, success = tcm.run_tests_task(
@@ -101,15 +104,19 @@ def main(
             logger.error("Tests failed")
             sys.exit(1)
             
-        # Scan vulnerabilities
-        _, success = tcm.run_vulnerability_check(
-            task_instance)
-        
-        if not success:
-            logger.error("Vulnerability scan failed")
-            sys.exit(1)
+        if not curate_data:
+            # Scan vulnerabilities
+            _, success = tcm.run_vulnerability_check(
+                task_instance)
+            
+            if not success:
+                logger.error("Vulnerability scan failed")
+                sys.exit(1)
         
         logger.info("Evaluation succeeded")
+        
+        if curate_data:
+            logger.info("Curated data")
         
         
 if __name__ == "__main__":
