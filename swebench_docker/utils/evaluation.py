@@ -213,7 +213,15 @@ def get_dir_eval(dir_path: str, task_instance: Dict) -> Dict[str, dict]:
     target_vulnerability = task_instance["target_vulnerability"]
 
     # print(task_instance[KEY_INSTANCE_ID])
-    results: Dict[str, dict] = {}
+    result = {
+        "patch_applied": False,
+        "testcase_status_compare": False,
+        "all_testcases_statuses": {},
+        "vulnerability_resolved": False,
+        "vulnerabilities_found": {},
+        "coverage": {}
+    }
+    
     
     # There should be 5 files in the directory
     # 1. .log
@@ -225,8 +233,8 @@ def get_dir_eval(dir_path: str, task_instance: Dict) -> Dict[str, dict]:
     # If there are not 5 files, return empty dict
     # TODO: validate this later, but return empty dict for now
     files = os.listdir(dir_path)
-    if len(files) != 5:
-        return results
+    # if len(files) != 5:
+    #     return result
     
     # Open the 4 files
     # Based on the file name, get the file type
@@ -246,28 +254,16 @@ def get_dir_eval(dir_path: str, task_instance: Dict) -> Dict[str, dict]:
     with open(log_fp, "r") as f:
         log_content = f.read()
         
-    with open(testcase_fp, "r") as f:
-        testcase_log_content = f.read()
-    
-    with open(vulnerability_fp, "r") as f:
-        vulnerability_content = json.load(f)
-        
-    with open(coverage_fp, "r") as f:
-        coverage_content = json.load(f)
+
         
     # Get the patch content
-    with open(patch_fp, "r") as f:
-        patch_content = f.read()
+    try:
+        with open(patch_fp, "r") as f:
+            patch_content = f.read()
+    except Exception as e:
+        print(f"Error opening patch file: {e}")
+        return result
         
-    # Check if the patch applied successfully
-    result = {
-        "patch_applied": False,
-        "testcase_status": False,
-        "all_testcases_statuses": {},
-        "vulnerability_resolved": False,
-        "vulnerabilities_found": {},
-        "coverage": {}
-    }
     
     # Check if the patch applied successfully
     if INSTALL_FAIL in log_content:
@@ -276,6 +272,16 @@ def get_dir_eval(dir_path: str, task_instance: Dict) -> Dict[str, dict]:
         result["patch_applied"] = False
     else:
         result["patch_applied"] = True
+        
+    try:
+        with open(testcase_fp, "r") as f:
+            testcase_log_content = f.read()
+            
+        with open(coverage_fp, "r") as f:
+            coverage_content = json.load(f)
+    except Exception as e:
+        print(f"Error opening testcase file: {e}")
+        return result
         
     # Get the test case status
     test_case_handler = TESTCASE_HANDLER.get(repo, None)
@@ -289,6 +295,14 @@ def get_dir_eval(dir_path: str, task_instance: Dict) -> Dict[str, dict]:
     )
     
     result["all_testcases_statuses"] = after_testcase_status
+       
+    result["coverage"] = get_line_coverage(coverage_content)
+    try:
+        with open(vulnerability_fp, "r") as f:
+            vulnerability_content = json.load(f)
+    except Exception as e:
+        print(f"Error opening vulnerability file: {e}")
+        return result
     
     # Get the vulnerability status
     result["vulnerability_resolved"] = check_resolved_vulnerability(
@@ -298,8 +312,7 @@ def get_dir_eval(dir_path: str, task_instance: Dict) -> Dict[str, dict]:
     # Get the vulnerabilities found
     vulnerabilities_found = get_vulnerabilities_info(vulnerability_content)
     result["vulnerabilities_found"] = vulnerabilities_found
-    
-    result["coverage"] = get_line_coverage(coverage_content)
+ 
     return result
   
 
