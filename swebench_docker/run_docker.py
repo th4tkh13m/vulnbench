@@ -12,7 +12,7 @@ from swebench_docker.constants import KEY_ID, KEY_INSTANCE_ID
 logger = logging.getLogger(__name__)
 
 
-async def run_docker_evaluation(task_instance: dict, namespace: str, log_dir: str, timeout: int = 900, log_suffix: str = "", verbose: bool = False, base64_instance: bool = True):
+async def run_docker_evaluation(task_instance: dict, namespace: str, log_dir: str, timeout: int = 900, log_suffix: str = "", verbose: bool = False, base64_instance: bool = True, curate_data: bool = False):
     repo_name = task_instance['repo'].replace("/", "_")
 
     # specifications = MAP_VERSION_TO_INSTALL[task_instance["repo"]][task_instance["version"]]
@@ -68,6 +68,7 @@ async def run_docker_evaluation(task_instance: dict, namespace: str, log_dir: st
             '-e', f"TIMEOUT={timeout}",
             '-e', f"LOG_SUFFIX={log_suffix}",
             '-e', f"TESTBED_NAME={repo_name}",
+            '-e', f"CURATE_DATA={str(curate_data).lower()}",
             docker_image
         ]
 

@@ -122,6 +122,7 @@ class TaskEnvContextManager:
         timeout: Optional[int] = None,
         is_eval: bool = True,
         image_type: str = "conda",
+        curate_data: bool = False,
     ):
         self.instance_id = task_instance[KEY_INSTANCE_ID]
         # self.instance_id = task_instance[KEY_ID]
@@ -131,6 +132,7 @@ class TaskEnvContextManager:
         self.cwd = os.getcwd()
         self.is_eval = is_eval
         self.image_type = image_type
+        self.curate_data = curate_data
 
         model = task_instance.get(KEY_MODEL, "baseline")
         # 
@@ -601,6 +603,7 @@ class TaskEnvContextManager:
             os.chmod(self.test_case_log_file, 0o666)
             os.chmod(self.coverage_file, 0o666)
             os.chmod(self.vulnerability_data_file, 0o666)
-            os.chmod(self.patch_file, 0o666)
+            if not self.curate_data:
+                os.chmod(self.patch_file, 0o666)
         except Exception as e:
             self.log.write(f"Error changing file permissions: {e}", level=ERROR)

@@ -70,6 +70,7 @@ def main(
         log_dir,
         timeout=timeout,
         image_type=image_type,
+        curate_data=curate_data,
     ) as tcm:
         
         if not curate_data:
@@ -104,19 +105,19 @@ def main(
             logger.error("Tests failed")
             sys.exit(1)
             
-        if not curate_data:
-            # Scan vulnerabilities
-            _, success = tcm.run_vulnerability_check(
-                task_instance)
-            
-            if not success:
-                logger.error("Vulnerability scan failed")
-                sys.exit(1)
+        # if not curate_data:
+        # Scan vulnerabilities
+        _, success = tcm.run_vulnerability_check(
+            task_instance)
+        
+        if not success:
+            logger.error("Vulnerability scan failed")
+            sys.exit(1)
         
         logger.info("Evaluation succeeded")
         
         if curate_data:
-            logger.info("Curated data")
+            logger.info("Curated data succeeded")
         
         
 if __name__ == "__main__":
@@ -157,5 +158,5 @@ if __name__ == "__main__":
         log_dir=log_dir,
         timeout=int_timeout,
         image_type=os.getenv("IMAGE_TYPE", "python"),
-        curate_data=os.getenv("CURATE_DATA", "false") == "true",
+        curate_data=os.getenv("CURATE_DATA", "false").lower() == "true",
     )
