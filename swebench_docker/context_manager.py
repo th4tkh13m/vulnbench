@@ -25,7 +25,8 @@ from swebench_docker.constants import (
     TESTS_TIMEOUT,
     PatchType,
     CODEQL_DATABASE_CREATION,
-    CODEQL_DATABASE_ANALYZE
+    CODEQL_DATABASE_ANALYZE,
+    MAP_REPO_TO_PREPARE_VULNERABILITY
 )
 
 logger_taskenv = logging.getLogger("taskenv")
@@ -265,7 +266,7 @@ class TaskEnvContextManager:
             f"\n\t- Instance ID: {self.instance[KEY_INSTANCE_ID]}"
             f"\n\t- Testbed: {self.testbed_name}"
         )
-        if self.is_eval:
+        if self.is_eval and not self.curate_data:
             enter_msg += f"\n\t- Evaluation Model: {self.instance[KEY_MODEL]}"
 
         output = self.exec("python --version".split())
@@ -463,7 +464,7 @@ class TaskEnvContextManager:
 
 
             if log_data:
-                self.log.write(f"Test Script: {test_cmd};\n")
+                self.log.write(f"Test Script: {test_cmd}\n")
 
             start = time.time()
             out_test = self.test_case_exec(
@@ -479,6 +480,7 @@ class TaskEnvContextManager:
                 # Write pass/fail status to log file
                 if out_test.returncode != 0:
                     self.log.write(f"\n{TESTS_FAILED}\n")
+                    self.log.write(f"Current Working Directory: {os.getcwd()}")
                 else:
                     self.log.write(f"\n{TESTS_PASSED}\n")
                     self.log.write(f"Current Working Directory: {os.getcwd()}")
@@ -493,18 +495,26 @@ class TaskEnvContextManager:
                     #     coverage_data_cmd = (
                     #         f"{self.cmd_conda_run} coverage json -o coverage.json"
                     #     )
-                    
-                coverage_data_cmd = f"coverage json -o coverage.json"
+            coverage_report_cmd = "coverage report --data-file=./.coverage"
+            self.test_case_exec(coverage_report_cmd, shell=True, check=False)
 
-                # Use shell
-                self.exec(coverage_data_cmd.split(), shell=False, check=False)
+                    
+            coverage_data_cmd = f"coverage json -o coverage.json"
                 
 
-                with open("coverage.json", "r") as cov_file:
-                    coverage_data = json.load(cov_file)
+            # Use shell
+            self.test_case_exec(coverage_data_cmd.split(), shell=True, check=False)
+            cwd = os.getcwd()
+            self.log.write(cwd)
+            full_paths = [os.path.join("/app", f) for f in os.listdir("/app")]
+            self.log.write(full_paths)
+            
+
+            with open("coverage.json", "r") as cov_file:
+                coverage_data = json.load(cov_file)
                     
                     # Save coverage data to file
-                    self.coverage_data.write_to_json(coverage_data)
+            self.coverage_data.write_to_json(coverage_data)
                     # cov_success = True
 
 
@@ -549,6 +559,11 @@ class TaskEnvContextManager:
                 self.log.write(f"Vulnerability Check;\n")
                 
             start = time.time()
+            if instance["repo"] == "faircloth-lab/phyluce":
+                os.environ["PATH"] = ":".join(
+    p for p in os.environ["PATH"].split(":")
+    if p != "/root/miniconda3/envs/phyluce/bin"
+)
             
             out_db_create = self.exec(
                 CODEQL_DATABASE_CREATION.split(), shell=False, timeout=self.timeout, check=False
