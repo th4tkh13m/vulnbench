@@ -13,3 +13,4 @@ __pycache__/
 
 run_test.py
 *.stamp
+.ipynb_checkpoints
