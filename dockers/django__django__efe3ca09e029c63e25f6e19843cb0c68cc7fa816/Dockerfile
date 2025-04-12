@@ -11,6 +11,7 @@ RUN apt-get install -y libmemcached-dev zlib1g-dev
 
 # Install dependencies
 RUN cd tests && pip install -e .. && pip install -r requirements/py3.txt
+RUN pip install coverage
 
 
 WORKDIR /vulnbench

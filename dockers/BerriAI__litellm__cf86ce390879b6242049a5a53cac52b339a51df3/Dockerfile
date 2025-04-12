@@ -25,6 +25,8 @@ RUN git -c advice.detachedHead=false checkout cf86ce390879b6242049a5a53cac52b339
 
 # Rerun poetry install to ensure all dependencies are installed
 RUN poetry install --with dev --extras proxy
+RUN poetry add "coverage<7.0"
+RUN pip install coverage
 
 WORKDIR /vulnbench
 COPY swebench_docker swebench_docker

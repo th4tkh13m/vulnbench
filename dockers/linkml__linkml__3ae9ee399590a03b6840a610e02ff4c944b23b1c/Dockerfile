@@ -21,9 +21,9 @@ RUN curl -sSL https://install.python-poetry.org | python3 -
 
 # Install dependencies with poetry
 RUN poetry install --all-extras
-RUN pip install coverage
 # Add poetry's virtualenv to PATH if needed (optional depending on run_test.py)
-# ENV PATH="/root/.local/share/pypoetry/venv/bin:${PATH}"
+ENV PATH="/root/.local/share/pypoetry/venv/bin:${PATH}"
+RUN pip install coverage
 
 
 
@@ -32,3 +32,4 @@ COPY swebench_docker swebench_docker
 COPY --chmod=0755  dockers/entrypoint.sh .
 
 ENTRYPOINT [ "./entrypoint.sh" ]
+# CMD ["tail", "-f", "/dev/null"]

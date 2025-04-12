@@ -5,7 +5,7 @@ WORKDIR /app
 RUN git -c advice.detachedHead=false checkout c1f6eda9e9a46a1239b48f667e3ac73176a8c852
 
 RUN pip install -r requirements-all.txt
-RUN pip install coverage
+RUN pip install coverage pytest
 RUN pip install -e .
 
 

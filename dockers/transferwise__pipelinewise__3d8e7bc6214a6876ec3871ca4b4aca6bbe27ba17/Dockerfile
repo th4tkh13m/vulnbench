@@ -33,6 +33,9 @@ ENV PIPELINEWISE_HOME=/app
 RUN . /app/.virtualenvs/pipelinewise/bin/activate && coverage erase
 ENV PATH="/app/.virtualenvs/pipelinewise/bin:${PATH}"
 
+WORKDIR /vulnbench
+COPY swebench_docker swebench_docker
+COPY --chmod=0755  dockers/entrypoint.sh .
 
 ENTRYPOINT ["./entrypoint.sh"]
 

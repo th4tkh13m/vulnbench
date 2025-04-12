@@ -33,3 +33,4 @@ COPY swebench_docker swebench_docker
 COPY --chmod=0755  dockers/entrypoint.sh .
 
 ENTRYPOINT [ "./entrypoint.sh" ]
+# ENTRYPOINT ["sh", "-c", "while true; do sleep 3600; done"]
