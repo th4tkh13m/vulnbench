@@ -13,7 +13,9 @@ ENV PATH="/root/.local/bin:${PATH}"
 
 # Use pipenv to install dependencies
 RUN pipenv install --dev
-RUN pip install coverage
+RUN pipenv install pytest-timeout
+
+RUN pip install coverage[toml]
 
 WORKDIR /vulnbench
 COPY swebench_docker swebench_docker
