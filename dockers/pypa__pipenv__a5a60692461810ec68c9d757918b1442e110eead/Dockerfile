@@ -13,6 +13,7 @@ ENV PATH="/root/.local/bin:${PATH}"
 
 # Use pipenv to install dependencies
 RUN pipenv install --dev
+RUN pip install coverage
 
 WORKDIR /vulnbench
 COPY swebench_docker swebench_docker

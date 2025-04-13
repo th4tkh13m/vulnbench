@@ -26,10 +26,12 @@ ENV PATH="/root/.local/share/pypoetry/venv/bin:${PATH}"
 RUN pip install coverage
 
 
+RUN coverage erase
 
 WORKDIR /vulnbench
 COPY swebench_docker swebench_docker
 COPY --chmod=0755  dockers/entrypoint.sh .
+
 
 ENTRYPOINT [ "./entrypoint.sh" ]
 # CMD ["tail", "-f", "/dev/null"]
