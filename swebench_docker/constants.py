@@ -111,7 +111,7 @@ MAP_REPO_TO_TEST_FRAMEWORK: Dict[str, str] = {
     "Microsoft/botbuilder-python": TEST_PYTEST,
     "NVIDIA/NVFlare": TEST_PYTEST + " tests/unit_test",
     "obsidianforensics/unfurl": TEST_PYTEST + " unfurl/tests", #TODO: Check this for logging
-    "pypa/pipenv": "pipenv run " + TEST_PYTEST,
+    "pypa/pipenv": "pipenv run " + TEST_PYTEST + " && coverage combine",
     "redhatinsights/insights-core": TEST_PYTEST,
     "simpeg/simpeg": TEST_PYTEST + " --ignore=tests/docs",
     "transferwise/pipelinewise": "coverage run --source=pipelinewise --parallel-mode -m pytest -v --no-header -rA --tb=no -p no:cacheprovider tests/units && coverage combine",
