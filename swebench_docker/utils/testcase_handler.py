@@ -210,11 +210,11 @@ TESTCASE_HANDLER = {
     "th4tkh13m/test_cwe_078": parse_log_pytest,
     "django/django": parse_log_django,
     "red-hat-storage/ocs-ci": parse_log_pytest,
-    "PyCQA/bandit": parse_log_pytest, #TODO: Check this for logging
+    "PyCQA/bandit": parse_log_django, #TODO: Check this for logging
     "BerriAI/litellm": parse_log_pytest,
     "faircloth-lab/phyluce": parse_log_pytest,
     "Flexget/Flexget": parse_log_pytest,
-    "fls-bioinformatics-core/genomics": parse_log_pytest,
+    "fls-bioinformatics-core/genomics": parse_log_django,
     "linkml/linkml": parse_log_pytest,
     "Microsoft/botbuilder-python": parse_log_pytest,
     "NVIDIA/NVFlare": parse_log_pytest,

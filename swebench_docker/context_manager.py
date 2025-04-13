@@ -495,15 +495,18 @@ class TaskEnvContextManager:
                     #     coverage_data_cmd = (
                     #         f"{self.cmd_conda_run} coverage json -o coverage.json"
                     #     )
-            coverage_report_cmd = "coverage report --data-file=./.coverage"
-            self.test_case_exec(coverage_report_cmd, shell=True, check=False)
-
+            # coverage_report_cmd = "coverage report --data-file=./.coverage"
+            # self.test_case_exec(coverage_report_cmd, shell=True, check=False)
+            # debug_data_cmd = "coverage debug data"
+            # self.exec(debug_data_cmd, shell=True, check=False)
                     
-            coverage_data_cmd = f"coverage json -o coverage.json"
+            coverage_data_cmd = "coverage json -o coverage.json --ignore-errors"
+            # if instance["repo"] == "linkml/linkml":
+            #     coverage_data_cmd = "poetry run coverage json -o coverage.json"
                 
 
             # Use shell
-            self.test_case_exec(coverage_data_cmd.split(), shell=True, check=False)
+            self.exec(coverage_data_cmd, shell=True, check=False)
             cwd = os.getcwd()
             self.log.write(cwd)
             full_paths = [os.path.join("/app", f) for f in os.listdir("/app")]

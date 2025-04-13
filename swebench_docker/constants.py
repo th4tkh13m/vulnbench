@@ -106,7 +106,7 @@ MAP_REPO_TO_TEST_FRAMEWORK: Dict[str, str] = {
     "BerriAI/litellm": "poetry run coverage run -m pytest tests/litellm/ --no-header -rA --tb=no -p no:cacheprovider", #TODO: Check this on coverage
     "faircloth-lab/phyluce":  "coverage run -m pytest -vv phyluce/ --timeout=60 --no-header -rA --tb=no -p no:cacheprovider",
     "Flexget/Flexget": "uv run coverage run -m pytest -n logical --dist loadgroup --no-header -rA --tb=no -p no:cacheprovider",
-    "fls-bioinformatics-core/genomics": "coverage run -m nose",
+    "fls-bioinformatics-core/genomics": "coverage run -m nose -v",
     "linkml/linkml": "poetry run coverage run -m pytest --no-header -rA --tb=no -p no:cacheprovider",
     "Microsoft/botbuilder-python": TEST_PYTEST,
     "NVIDIA/NVFlare": TEST_PYTEST + " tests/unit_test",
