@@ -58,45 +58,51 @@ async def main(
     tasks_map = {t[KEY_INSTANCE_ID]: t for t in tasks}
 
     # Remove predictions that have already been evaluated
-    if skip_existing:
-        # Skip logs that already exist
-        predictions_filtered = []
-        for p in predictions:
-            dir_name = f"{p[KEY_INSTANCE_ID]}.{p[KEY_MODEL]}"
-            if log_suffix:
-                dir_name = f"{p[KEY_INSTANCE_ID]}.{p[KEY_MODEL]}"
-            dir_path = os.path.join(log_dir, dir_name)
-            if not os.path.exists(dir_path):
-                predictions_filtered.append(p)
-        if len(predictions_filtered) == 0:
-            logger.info(f"All predictions already exist, skipping")
-            return
-        else:
-            logger.info(
-                f"# of predictions to evaluate: {len(predictions_filtered)} " +
-                f"({len(predictions) - len(predictions_filtered)} already evaluated)"
-            )
-            predictions = predictions_filtered
-    else:
-        logger.info(
-            f"# of predictions to evaluate: {len(predictions)}"
-        )
+    # if skip_existing:
+    #     # Skip logs that already exist
+    #     predictions_filtered = []
+    #     for p in predictions:
+    #         dir_name = f"{p[KEY_INSTANCE_ID]}.{p[KEY_MODEL]}"
+    #         if log_suffix:
+    #             dir_name = f"{p[KEY_INSTANCE_ID]}.{p[KEY_MODEL]}"
+    #         dir_path = os.path.join(log_dir, dir_name)
+    #         if not os.path.exists(dir_path):
+    #             predictions_filtered.append(p)
+    #     if len(predictions_filtered) == 0:
+    #         logger.info(f"All predictions already exist, skipping")
+    #         return
+    #     else:
+    #         logger.info(
+    #             f"# of predictions to evaluate: {len(predictions_filtered)} " +
+    #             f"({len(predictions) - len(predictions_filtered)} already evaluated)"
+    #         )
+    #         predictions = predictions_filtered
+    # else:
+    #     logger.info(
+    #         f"# of predictions to evaluate: {len(predictions)}"
+    #     )
 
     task_instances = []
     repo_set = set()
     for task_instance in tasks:
-        if task_instance["repo"] not in repo_set:
-            repo_set.add(task_instance["repo"])
-            # Add the repo to the task instance
-            
-            test_cmd = MAP_REPO_TO_TEST_FRAMEWORK[task_instance["repo"]]
-            
-            task_instances.append({
-                "repo": task_instance["repo"],
-                "base_commit": task_instance["base_commit"],
-                "test_cmd": test_cmd,
-                KEY_INSTANCE_ID: task_instance[KEY_INSTANCE_ID],
-            })
+        try:
+            if task_instance["repo"] not in repo_set:
+                repo_set.add(task_instance["repo"])
+                # if task_instance["repo"] in ["linkml/linkml", "fls-bioinformatics-core/genomics"]:
+                    # Add the repo to the task instance
+                    
+                test_cmd = MAP_REPO_TO_TEST_FRAMEWORK[task_instance["repo"]]
+                
+                task_instances.append({
+                    "repo": task_instance["repo"],
+                    "base_commit": task_instance["base_commit"],
+                    "test_cmd": test_cmd,
+                    KEY_INSTANCE_ID: task_instance[KEY_INSTANCE_ID],
+                    KEY_MODEL: "None",
+                    
+                })
+        except Exception:
+            logger.info(f"This instance {task_instance['repo']} is not supported") 
 
 
     # Set the relevant data on task_instances
@@ -118,19 +124,19 @@ async def main(
     sem = asyncio.Semaphore(num_processes if num_processes > 0 else len(task_instances))
     async with asyncio.TaskGroup() as tg:
         for task_instance in task_instances:
-            if task_instance[KEY_PREDICTION]:
+            # if task_instance[KEY_PREDICTION]:
                 # Create each log directory
-                dir_name = f"{task_instance['repo'].replace('/', '__')}"
-                dir_path = os.path.join(log_dir, dir_name)
-                os.makedirs(dir_path, exist_ok=True)
-                
-                async def run_docker_throttled(*args, **kwargs):
-                    async with sem:
-                        return await run_docker_evaluation(*args, **kwargs)
+            dir_name = f"{task_instance['repo'].replace('/', '__')}"
+            dir_path = os.path.join(log_dir, dir_name)
+            os.makedirs(dir_path, exist_ok=True)
+            
+            async def run_docker_throttled(*args, **kwargs):
+                async with sem:
+                    return await run_docker_evaluation(*args, **kwargs)
 
-                tg.create_task(run_docker_throttled(task_instance, namespace, dir_path, timeout, log_suffix, curate_data=False))
-            else:
-                logger.info(f"[{task_instance['repo'].replace('/', '__')}] No prediction found.")
+            tg.create_task(run_docker_throttled(task_instance, namespace, dir_path, timeout, log_suffix, curate_data=True))
+        else:
+            logger.info(f"[{task_instance['repo'].replace('/', '__')}] No prediction found.")
 
 
 if __name__ == "__main__":
