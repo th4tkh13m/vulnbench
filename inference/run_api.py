@@ -486,6 +486,7 @@ def main(
     if split not in dataset:
         raise ValueError(f"Invalid split {split} for dataset {dataset_name_or_path}")
     dataset = dataset[split]
+    print(dataset)
     lens = np.array(list(map(len, dataset["text_inputs"])))
     dataset = dataset.select(np.argsort(lens))
     if len(existing_ids) > 0:

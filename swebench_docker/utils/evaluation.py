@@ -27,7 +27,7 @@ from swebench_docker.constants import (
     CWE_LIST
 )
 
-from swebench_docker.utils.testcase_handler import TestStatus, TESTCASE_HANDLER
+from swebench_docker.utils.testcase_handler import TestStatus, TESTCASE_HANDLER, from_test_case_list_to_dict
 
 from swebench_docker.utils.vulnerabilities_handler import get_vulnerability_type, get_vulnerabilities_type_count, get_vulnerabilities_info
 from swebench_docker.utils.commit_handler import generate_line_mappings_after_to_bef
@@ -186,7 +186,7 @@ def check_testcase_statuses(bef_testcase_status: Dict[str, list[str]], after_tes
                 print(f"Test case {test_case} not found after patch")
                 return False
         elif bef_testcase_status[test_case] == TestStatus.XFAIL.value:
-            if test_case not in after_testcase_status or after_testcase_status[test_case] != TestStatus.XFAILED.value:
+            if test_case not in after_testcase_status or after_testcase_status[test_case] != TestStatus.XFAIL.value:
                 print(f"Test case {test_case} failed after patch")
                 return False
     
@@ -366,7 +366,7 @@ def get_eval_reports_for_instance_dir(
             print("error in instance", instance_id)
             print(e)
             raise e
-            print(f"Skipping instance {get_file_name_from_lp(eval_log)}")
+            # print(f"Skipping instance {get_file_name_from_lp(eval_log)}")
 
     report_final = {}
 
@@ -560,6 +560,7 @@ def get_model_eval_summary(
     summary = {
         "repo": repo if repo is not None else "all",
         "total_predictions": len(preds),
+        "total_instances": len(report_net),
     }
 
     format_dec = lambda x: round(x * 100, 2)
@@ -700,5 +701,9 @@ def get_eval_refs(data_path_or_name):
         all_data = list()
         all_data.extend(data["test"])
         data = all_data
+    for datapoint in all_data:
+        datapoint["testcase_status"] = from_test_case_list_to_dict(
+            datapoint["testcase_status"]
+        )
 
     return {d[KEY_INSTANCE_ID]: d for d in data}

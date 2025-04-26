@@ -8,17 +8,18 @@ from tempfile import TemporaryDirectory
 import unidiff
 from tqdm.auto import tqdm
 
-from inference.tokenize_dataset import TOKENIZER_FUNCS
 from inference.utils import (
     AutoContextManager,
     ingest_directory_contents,
 )
 from swebench_docker.utils.vulnerabilities_handler import get_vulnerability_type
-
+import tiktoken
+from transformers import AutoTokenizer
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
 
+TOKENIZER = tiktoken.get_encoding("cl100k_base")
 PATCH_EXAMPLE = """--- a/file.py
 +++ b/file.py
 @@ -1,27 +1,35 @@
@@ -203,7 +204,7 @@ def prompt_style_2_cot(instance):
 
 def prompt_style_3_cot(instance):
     premise = "You will be provided with a partial code base and an vulnerability information that is needed to be resolved."
-    readmes_text = make_code_text(instance["readmes"])
+    readmes_text = make_code_text(instance["readmes"], add_line_numbers=False)
     code_text = make_code_text(instance["file_contents"])
     example_explanation = (
         "Here is an example of a patch file. It consists of changes to the code base. "
@@ -410,7 +411,7 @@ def get_related_filenames(instance):
     if instance["target_vulnerability"]["relatedLocations"]:
         for location in instance["target_vulnerability"]["relatedLocations"]:
             physical_location = location["physicalLocation"]["artifactLocation"]["uri"]
-            if not  "test" in physical_location:
+            if "test" not in physical_location:
                 source_files.add(location["physicalLocation"]["artifactLocation"]["uri"])
     else:
         source_files.add(
@@ -418,6 +419,15 @@ def get_related_filenames(instance):
                 "artifactLocation"]["uri"]
             
         )
+    # Reorder the files: Get the file that is the real vulnerable file first
+    # and then the related files
+    source_files = sorted(
+        source_files,
+        key=lambda x: (
+            x != instance["target_vulnerability"]["locations"][0]["physicalLocation"][
+                "artifactLocation"]["uri"]
+        ),
+    )
     return source_files
 
 def vulnerable_filenames(instance):
@@ -435,7 +445,7 @@ def add_text_inputs(
     k,
     prompt_style,
     file_source,
-    max_context_len=None,
+    max_context_len=128000,
     tokenizer_name=None,
     verbose=False,
     progress_file=None,
@@ -452,6 +462,14 @@ def add_text_inputs(
     - progress_file: required, path to save processed instances
     """
     assert progress_file is not None, "progress_file is required"
+    
+    if tokenizer_name and tokenizer_name != "openai":
+        tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
+        tokenizer_func = lambda x: tokenizer(x)["input_ids"]
+    else:
+        tokenizer = tiktoken.get_encoding("cl100k_base")
+        tokenizer_func = lambda x: TOKENIZER.encode(x)
+        
 
     # Create progress file directory if it doesn't exist
     progress_path = Path(progress_file)
@@ -472,11 +490,11 @@ def add_text_inputs(
         progress_file_handle = open(progress_file, "w")
 
     try:
-        if max_context_len is not None:
-            assert tokenizer_name is not None, (
-                "Must specify tokenizer_name if using max_context_len"
-            )
-            tokenizer, tokenizer_func = TOKENIZER_FUNCS[tokenizer_name]
+        # if max_context_len is not None:
+        #     assert tokenizer_name is not None, (
+        #         "Must specify tokenizer_name if using max_context_len"
+        #     )
+            # tokenizer, tokenizer_func = TOKENIZER_FUNCS[tokenizer_name]
 
         # Add retrieval results if needed
         # if file_source in {"bm25"}:
@@ -514,7 +532,7 @@ def add_text_inputs(
                                 processed_instance
                             )
                             base_text_input_length = len(
-                                tokenizer_func(base_text_inputs, tokenizer)
+                                tokenizer_func(base_text_inputs)
                             )
 
                         if file_source == "related":
@@ -539,32 +557,30 @@ def add_text_inputs(
                             raise ValueError(f"Invalid file source {file_source}")
 
                         # Handle context length limits
-                        # if max_context_len is not None:
-                        #     cur_input_len = base_text_input_length
-                        #     include_files = []
-                        #     for filename in [
-                        #         x["docid"] for x in processed_instance["hits"]
-                        #     ]:
-                        #         content = make_code_text(
-                        #             {
-                        #                 filename: processed_instance["file_contents"][
-                        #                     filename
-                        #                 ]
-                        #             }
-                        #         )
-                        #         if tokenizer_name == "llama":
-                        #             tokens = tokenizer_func("\n" + content, tokenizer)
-                        #             idx = tokens.index(13)
-                        #             tokens = tokens[idx + 1 :]
-                        #         else:
-                        #             tokens = tokenizer_func(content, tokenizer)
-                        #         if cur_input_len + len(tokens) < max_context_len:
-                        #             include_files.append(filename)
-                        #             cur_input_len += len(tokens)
-                        #     processed_instance["file_contents"] = {
-                        #         filename: processed_instance["file_contents"][filename]
-                        #         for filename in include_files
-                        #     }
+                        if max_context_len is not None:
+                            cur_input_len = base_text_input_length
+                            include_files = []
+                            for filename in processed_instance["file_contents"]:
+                                content = make_code_text(
+                                    {
+                                        filename: processed_instance["file_contents"][
+                                            filename
+                                        ]
+                                    }
+                                )
+                                # if tokenizer_name == "llama":
+                                #     tokens = tokenizer_func("\n" + content, tokenizer)
+                                #     idx = tokens.index(13)
+                                #     tokens = tokens[idx + 1 :]
+                                # else:
+                                tokens = tokenizer_func(content)
+                                if cur_input_len + len(tokens) < max_context_len:
+                                    include_files.append(filename)
+                                    cur_input_len += len(tokens)
+                            processed_instance["file_contents"] = {
+                                filename: processed_instance["file_contents"][filename]
+                                for filename in include_files
+                            }
 
                         # print(processed_instance["file_contents"])
                         
@@ -572,7 +588,7 @@ def add_text_inputs(
                         processed_instance["text_inputs"] = PROMPT_FUNCTIONS[
                             prompt_style
                         ](processed_instance)
-                        print(processed_instance["text_inputs"])
+                        # print(processed_instance["text_inputs"])
 
                         # Save to progress file
                         progress_file_handle.write(

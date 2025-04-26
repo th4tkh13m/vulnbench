@@ -13,7 +13,7 @@ CWE_LIST = [
     "CWE-094",   # Code Injection
     "CWE-502",  # Deserialization of Untrusted Data
     # "CWE-287",  # Improper Authentication
-    "CWE-918",  # Server-Side Request Forgery (SSRF)
+    # "CWE-918",  # Server-Side Request Forgery (SSRF)
     # "CWE-400",  # Uncontrolled Resource Consumption (DoS)
     "CWE-022",   # Path Traversal
     # "CWE-352",  # Cross-Site Request Forgery (CSRF)
@@ -113,30 +113,30 @@ MAP_REPO_TO_TEST_FRAMEWORK: Dict[str, str] = {
     "obsidianforensics/unfurl": TEST_PYTEST + " unfurl/tests", #TODO: Check this for logging
     "pypa/pipenv": "pipenv run coverage run -m pytest --timeout=180 --no-header -rA --tb=no -p no:cacheprovider tests/unit" + " && coverage combine",
     "redhatinsights/insights-core": TEST_PYTEST,
-    "simpeg/simpeg": TEST_PYTEST + "  --timeout=60  --ignore=tests/docs",
+    "simpeg/simpeg": TEST_PYTEST + "  --timeout=20  --ignore=tests/docs",
     "transferwise/pipelinewise": "coverage run --source=pipelinewise --parallel-mode -m pytest -v --no-header -rA --tb=no -p no:cacheprovider tests/units && coverage combine",
     
    
    
    
-    "th4tkh13m/test_cwe_078": TEST_PYTEST,
-    "marshmallow-code/marshmallow": TEST_PYTEST,
-    "matplotlib/matplotlib": TEST_PYTEST,
-    "mwaskom/seaborn": "coverage run -m pytest --no-header -rA",
-    "pallets/flask": TEST_PYTEST,
-    "psf/requests": TEST_PYTEST,
-    "pvlib/pvlib-python": TEST_PYTEST,
-    "pydata/xarray": TEST_PYTEST,
-    "pydicom/pydicom": TEST_PYTEST_SKIP_NO_HEADER,
-    "pylint-dev/astroid": TEST_PYTEST,
-    "pylint-dev/pylint": TEST_PYTEST,
-    "pytest-dev/pytest": "coverage run -m pytest -rA",
-    "pyvista/pyvista": TEST_PYTEST,
-    "scikit-learn/scikit-learn": TEST_PYTEST_SKIP_NO_HEADER,
-    "sphinx-doc/sphinx": "tox -epy39 -v --",
-    "sqlfluff/sqlfluff": TEST_PYTEST,
-    "swe-bench/humaneval": "coverage run python",
-    "sympy/sympy": "coverage run bin/test --no-subprocess -C --verbose",
+    # "th4tkh13m/test_cwe_078": TEST_PYTEST,
+    # "marshmallow-code/marshmallow": TEST_PYTEST,
+    # "matplotlib/matplotlib": TEST_PYTEST,
+    # "mwaskom/seaborn": "coverage run -m pytest --no-header -rA",
+    # "pallets/flask": TEST_PYTEST,
+    # "psf/requests": TEST_PYTEST,
+    # "pvlib/pvlib-python": TEST_PYTEST,
+    # "pydata/xarray": TEST_PYTEST,
+    # "pydicom/pydicom": TEST_PYTEST_SKIP_NO_HEADER,
+    # "pylint-dev/astroid": TEST_PYTEST,
+    # "pylint-dev/pylint": TEST_PYTEST,
+    # "pytest-dev/pytest": "coverage run -m pytest -rA",
+    # "pyvista/pyvista": TEST_PYTEST,
+    # "scikit-learn/scikit-learn": TEST_PYTEST_SKIP_NO_HEADER,
+    # "sphinx-doc/sphinx": "tox -epy39 -v --",
+    # "sqlfluff/sqlfluff": TEST_PYTEST,
+    # "swe-bench/humaneval": "coverage run python",
+    # "sympy/sympy": "coverage run bin/test --no-subprocess -C --verbose",
 }
 
 # Constants - Evaluation Keys

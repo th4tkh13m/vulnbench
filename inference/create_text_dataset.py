@@ -79,17 +79,17 @@ def validate_arguments(
             "Must provide HUGGING_FACE_HUB_TOKEN to push to the Hub"
         )
         assert output_dir is None, "Cannot provide output_dir if pushing to the Hub"
-    if max_context_len is not None:
-        assert tokenizer_name is not None
+    # if max_context_len is not None:
+    #     assert tokenizer_name is not None
     if push_to_hub_user is None and not Path(output_dir).exists():
         Path(output_dir).mkdir(parents=True)
     if max_context_len is not None:
         assert file_source not in {"all", "oracle"}, (
             "Cannot use max_context_len with oracle or all file sources"
         )
-        assert tokenizer_name is not None, (
-            "Must provide tokenizer_name if max_context_len is not None"
-        )
+        # assert tokenizer_name is not None, (
+        #     "Must provide tokenizer_name if max_context_len is not None"
+        # )
     if k is not None:
         assert file_source not in {"all", "oracle"}, (
             "Cannot use max_context_len with oracle or all file sources"
@@ -108,7 +108,7 @@ def construct_output_filename(
     if k is not None:
         output_file += f"__k-{k}"
     if max_context_len is not None:
-        output_file += f"__mcc-{max_context_len}-{tokenizer_name}"
+        output_file += f"__mcc-{max_context_len}-{tokenizer_name.replace('/', '__')}"
     return output_file
 
 
@@ -307,14 +307,13 @@ if __name__ == "__main__":
     parser.add_argument(
         "--max_context_len",
         type=int,
-        default=None,
+        default=120000,
         help="Maximum number of tokens to use for context.",
     )
     parser.add_argument(
         "--tokenizer_name",
         type=str,
-        default=None,
-        choices=TOKENIZER_FUNCS.keys(),
+        default="openai",
         help="Tokenizer to use for max_context_len. Only needed if max_context_len is specified.",
     )
     parser.add_argument(

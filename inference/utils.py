@@ -146,7 +146,8 @@ def is_test(name, test_phrases=None):
 
 
 class ContextManager:
-    def __init__(self, repo_path, base_commit, verbose=False):
+    def __init__(self, repo_name, repo_path, base_commit, verbose=False):
+        self.repo_name = repo_name
         self.repo_path = Path(repo_path).resolve().as_posix()
         self.old_dir = os.getcwd()
         self.base_commit = base_commit
@@ -165,6 +166,7 @@ class ContextManager:
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
+        
         return self
 
     def get_environment(self):
@@ -201,7 +203,7 @@ class AutoContextManager(ContextManager):
             if verbose:
                 print(f"Cloning {instance['repo']} to {root_dir}")
             Repo.clone_from(repo_url, repo_dir)
-        super().__init__(repo_dir, instance["base_commit"], verbose=verbose)
+        super().__init__(instance["repo"], repo_dir, instance["base_commit"], verbose=verbose)
         self.instance = instance
 
     def __exit__(self, exc_type, exc_val, exc_tb):

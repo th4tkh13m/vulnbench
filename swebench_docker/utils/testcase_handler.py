@@ -204,6 +204,20 @@ def has_attribute_or_import_error(log_before):
             return True
     return False
 
+def from_test_case_list_to_dict(testcase_lst):
+    """
+    Convert test case list to dictionary
+
+    Args:
+        testcase_lst (list): List of test cases
+    Returns:
+        dict: Dictionary with test case as key and status as value
+    """
+    test_case_dict = {}
+    for testcase in testcase_lst:
+        test_case_dict[testcase["test_case_name"]] = testcase["status"]
+    return test_case_dict
+
     
 TESTCASE_HANDLER = {
     "ytdl-org/youtube-dl": parse_log_django,
